@@ -2,6 +2,13 @@
 
 Newest first.
 
+## Version 6 (in progress): Foundation rebuild
+
+- Environment moved from Anaconda and Jupyter to uv. `pyproject.toml`, `uv.lock` and `.python-version` (3.12) replace `requirements.txt`.
+- Dependencies now resolve to pandas 3.1 and plotly 7.1. A smoke test on synthetic text confirmed counting, sentiment, dashboard, summary and date parsing run unchanged with no warnings.
+- Removed unused `import nltk` (known issue 7). nltk was never in the requirements, so the import would fail in a clean environment.
+- pytest added as a development dependency.
+
 ## Version 5: Layout spacing
 
 - `make_subplots` `vertical_spacing` raised from 0.06 to 0.12.

@@ -12,7 +12,9 @@ Read `docs/context.md` for the full history, design decisions and known issues b
 FedSpeak/
   CLAUDE.md
   README.md
-  requirements.txt
+  pyproject.toml       dependencies (managed by uv)
+  uv.lock              exact resolved versions, committed
+  .python-version      pinned Python version (3.12)
   src/
     fedspeak.py        single-file pipeline (extract, count, score, plot, summarize)
   docs/
@@ -24,15 +26,15 @@ FedSpeak/
 
 Current focus: section 0 (environment, package layout, downloader) of `docs/plan.md`, then section 1 (data verification). The package restructure in section 0.2 is approved; the layout above will change to match it.
 
-Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the three top-level files. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
+Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 
 ## How it runs
 
-- Windows machine, Anaconda, Jupyter notebook or plain script.
-- Input: folder of FOMC minutes PDFs, currently `D:\FOMC_Minutes`, searched recursively with `os.walk`.
+- Windows machine, VS Code, plain Python managed by uv. Anaconda and Jupyter are no longer used. uv is installed at `~\.local\bin`.
+- Input: folder of FOMC minutes PDFs, currently `D:\FOMC_Minutes`, searched recursively with `os.walk`. That folder lived on an external drive that is not available; the downloader in `docs/plan.md` section 0 replaces it.
 - Filenames contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD` (for example `fomcminutes20230201.pdf`). The date parser depends on this.
-- Install: `pip install -r requirements.txt`
-- Run: `python src/fedspeak.py`
+- Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
+- Run: `uv run python src/fedspeak.py`. Tests: `uv run pytest`.
 - Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, console summary.
 
 ## Pipeline (all in `src/fedspeak.py`)
@@ -68,5 +70,4 @@ See `docs/context.md` for detail. Short list:
 4. The "4-meeting average" label says about one year in the summary text, but the FOMC meets eight times a year, so four meetings is about six months.
 5. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
 6. Keywords are matched as single tokens, so multi-word phrases such as "price stability" will not match in `keyword_sentiment`.
-7. `import nltk` is unused and can be removed.
-8. Snippets are truncated to 200 characters when stored, so `export_snippets` re-scores truncated text and can disagree with the score used in the charts.
+7. Snippets are truncated to 200 characters when stored, so `export_snippets` re-scores truncated text and can disagree with the score used in the charts.

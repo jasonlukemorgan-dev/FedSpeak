@@ -13,9 +13,13 @@ It then builds an interactive Plotly dashboard with three panels: frequency over
 
 ## Setup
 
+FedSpeak uses [uv](https://docs.astral.sh/uv/) to manage Python and dependencies. Install uv, then from the project folder:
+
 ```
-pip install -r requirements.txt
+uv sync
 ```
+
+This creates a local `.venv` with the pinned Python version (3.12) and the exact package versions in `uv.lock`.
 
 Edit the configuration block at the top of `src/fedspeak.py`:
 
@@ -30,10 +34,10 @@ PDF filenames must contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD`. Subfo
 ## Run
 
 ```
-python src/fedspeak.py
+uv run python src/fedspeak.py
 ```
 
-In Jupyter, run the imports and function cells, then call `process_pdfs`, `build_dashboard` and `print_summary` directly. Use `pio.renderers.default = "notebook"` to render charts inline.
+Run tests with `uv run pytest`.
 
 Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, and a plain English summary printed to the console.
 

@@ -10,7 +10,6 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 - (fix) Make the rolling window and its label consistent. Eight meetings a year means four meetings is about six months.
 - (fix) Remove the hardcoded `"uncertainty"` in the run block. Loop over `KEYWORDS` or accept a parameter.
 - (fix) Store each snippet's score with the snippet instead of re-scoring truncated text.
-- (fix) Remove unused `import nltk`.
 - Support multi-word phrases in `keyword_sentiment`.
 
 ## 2. Analytical quality

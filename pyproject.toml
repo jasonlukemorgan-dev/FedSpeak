@@ -1,0 +1,18 @@
+[project]
+name = "fedspeak"
+version = "0.6.0"
+description = "Keyword frequency and sentiment analysis of Federal Reserve FOMC minutes, with an interactive dashboard."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=3.1.1",
+    "pdfplumber>=0.11.10",
+    "plotly>=7.1.0",
+    "tqdm>=4.70.1",
+    "vadersentiment>=3.3.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]

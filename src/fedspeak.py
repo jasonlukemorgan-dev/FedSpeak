@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import re
 import os
-import nltk
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from collections import defaultdict
 from tqdm import tqdm

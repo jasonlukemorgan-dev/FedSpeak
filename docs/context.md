@@ -45,7 +45,7 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 4. The summary text and earlier discussion describe the 4-meeting rolling average as about one year. The FOMC holds eight scheduled meetings a year, so four meetings is about six months. Either change the window to 8 or fix the wording.
 5. VADER is not a finance lexicon. Words like "tightening" and "inflation" carry specific meaning in this setting. Suggested overrides: tightening -0.5, accommodative +0.4, headwinds -0.6, resilient +0.5, applied through `analyzer.lexicon.update(...)`.
 6. `keyword_sentiment` compares single tokens, so multi-word keywords never match there even though `count_keywords` would match them. Needs phrase-aware matching.
-7. `import nltk` is unused. The punkt download is not needed.
+7. Fixed in version 6: unused `import nltk` removed.
 8. Stored snippets are cut at 200 characters, so `export_snippets` re-scores shortened text and can show scores that differ from those behind the charts. Store the score alongside the snippet instead of recomputing.
 9. `process_pdfs` re-parses every PDF on every run. Parsing ten years takes minutes. Cache extracted text to disk.
 10. Dashboard has a long, dense legend and many overlapping lines. A keyword selector or small multiples may read better as keyword count grows.
