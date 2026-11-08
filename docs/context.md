@@ -119,7 +119,11 @@ Reading: VADER's compound score saturates on long passages, so the window labels
 
 The sentence splitter (`sentiment.sentence_spans`) handles titles, initials, "U.S.", "a.m." and similar; 61,612 sentences, median 26 words. A few attendance lists and tables form very long sentences (up to 1,039 words); keyword hits there are rare.
 
-Decision pending: default `CONTEXT_MODE` stays "window" until the audit (plan 1.5) is labelled. Recommendation: "sentence".
+Decision (2026-11-08): default `CONTEXT_MODE` is now "sentence", on the corpus evidence above. The user chose not to label the audit first; the audit page remains available as a later confirmation (`fedspeak audit`, then `--labels`). The window stays available as a setting.
+
+Effect on corpus averages (mean of per-meeting sentiment, window to sentence): uncertainty +0.27 to -0.16, recession +0.03 to -0.31, inflation +0.39 to +0.09, employment +0.41 to +0.20, tightening +0.43 to +0.13. Under the window, "uncertainty" and "recession" read as positive or neutral on average, which the text does not support. Results from before this change are not comparable.
+
+Remaining weakness: VADER's general vocabulary. "Subject to substantial uncertainty" scored +0.96 because the same sentence contains "dissipate" and "increasing"; "inflation ... still were low" reads negative. Next step on the roadmap: a Fed-specific lexicon or Loughran-McDonald comparison.
 
 ## Interpreting results with care
 

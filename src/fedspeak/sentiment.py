@@ -107,7 +107,8 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
     return records
 
 
-def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None):
+def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None, mode=CONTEXT_MODE,
+                      neighbors=SENTENCE_NEIGHBORS):
     """Average VADER score per keyword over its hits.
 
     Returns ({"<kw>_sentiment": avg or NaN if no hits, "<kw>_sentiment_n": hits}, records), where
@@ -116,7 +117,7 @@ def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None):
     """
     if hits is None:
         hits = find_hits(text, keywords)
-    records = score_hits(text, hits, window)
+    records = score_hits(text, hits, window, mode=mode, neighbors=neighbors)
 
     avg_sentiments = {}
     for kw in keywords:

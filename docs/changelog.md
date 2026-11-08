@@ -26,6 +26,7 @@ Newest first.
 - Sentiment is NaN, not 0, when a keyword is not mentioned (plan 1.4). The dashboard shows gaps and the summary says "not mentioned". Removed fake neutral scores from 191 of 270 meetings for "recession". Summary text now says the 4-meeting average is about six months, not one year.
 - Sentence-based scoring added as an option (plan 1.6): `CONTEXT_MODE = "sentence"` scores the sentence containing each hit, plus `SENTENCE_NEIGHBORS` sentences each side. New sentence splitter aware of the abbreviations in the minutes. `fedspeak verify context` compares window and sentence scoring on every hit; findings in `docs/context.md`. Default unchanged until the audit is labelled.
 - Audit page (plan 1.5): `fedspeak audit` samples 30 hits per keyword with a fixed seed and writes `output/audit/audit.html` for blind labelling (real mention? tone?), with scores hidden until revealed and labels saved in the browser and downloaded as CSV. `fedspeak audit --labels <csv>` reports agreement for the window, sentence and sentence-plus-one methods.
+- Default sentiment context is now the hit's sentence (`CONTEXT_MODE = "sentence"`), replacing 75 words each side. Corpus averages change substantially, for example uncertainty +0.27 to -0.16 and recession +0.03 to -0.31. Window mode remains a setting.
 - First run on real minutes (2020) worked end to end. It surfaced values the verification work must explain, for example `tightening` sentiment above +0.9 from single mentions and `uncertainty` reading +0.71 in December 2020.
 
 ## Version 5: Layout spacing

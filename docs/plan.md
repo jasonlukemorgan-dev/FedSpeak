@@ -144,7 +144,7 @@ Status: built. `fedspeak audit` writes `output/audit/audit.html` (30 hits per ke
 
 Option to evaluate: score the sentence (or sentence plus one on each side) around each hit. Compare the two methods on the audit sample before deciding. Keep the word window as a setting either way.
 
-Status: sentence mode built (`CONTEXT_MODE`, `SENTENCE_NEIGHBORS`) and compared on every hit (`fedspeak verify context`, findings in `docs/context.md`). Corpus evidence favors "sentence"; the default switches once the audit labels confirm it.
+Status: sentence mode built (`CONTEXT_MODE`, `SENTENCE_NEIGHBORS`) and compared on every hit (`fedspeak verify context`, findings in `docs/context.md`). Default switched to "sentence" on 2026-11-08 on the corpus evidence; the audit labelling pass is deferred and remains the confirming check.
 
 ### Done when
 
@@ -214,6 +214,5 @@ Dot plot code lives in `dots.py` and its tables in the DuckDB file (see section 
 
 ## Open decisions
 
-- Context window: word window or sentence based. Depends on 1.6 comparison.
 - EWMA as a replacement for the rolling mean, or shown beside it.
 - New dependencies: `ruptures`, a Loughran-McDonald word list. Approved: uv, pytest (tests only), DuckDB.

@@ -7,7 +7,7 @@ Keyword frequency and sentiment analysis of Federal Reserve FOMC minutes, with a
 Point it at a folder of FOMC minutes PDFs and a list of keywords. For every meeting it calculates:
 
 - How often each keyword appears, per 1,000 words, so meetings of different length are comparable.
-- The average sentiment of the text surrounding each keyword, scored from -1 (very negative) to +1 (very positive) using VADER.
+- The average sentiment of the sentence containing each keyword, scored from -1 (very negative) to +1 (very positive) using VADER.
 
 It then builds an interactive Plotly dashboard with three panels: frequency over time, sentiment over time, and a scatter of frequency against sentiment.
 
@@ -37,7 +37,7 @@ Choose what to analyze in `src/fedspeak/config.py`:
 KEYWORDS = ["uncertainty", "inflation", "employment", "recession", "tightening"]
 START_DATE = None   # e.g. "2016-01-01"
 END_DATE = None
-CONTEXT_WINDOW = 75
+CONTEXT_MODE = "sentence"   # or "window" for CONTEXT_WINDOW words on each side
 ```
 
 ## Run

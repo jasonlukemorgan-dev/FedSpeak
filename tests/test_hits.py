@@ -12,7 +12,8 @@ KW = ["inflation", "recession", "uncertainty"]
 
 
 def records(window=10):
-    return score_hits(TEXT, find_hits(TEXT, KW), window=window)
+    # These tests check word-window mode explicitly; sentence mode is tested in test_sentences.py.
+    return score_hits(TEXT, find_hits(TEXT, KW), window=window, mode="window")
 
 
 def test_offsets_point_at_the_matched_text():

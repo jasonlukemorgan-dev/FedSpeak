@@ -83,7 +83,7 @@ def test_frequency_and_sentiment_use_the_same_hits():
 
 
 def _window_words(text, keyword, window):
-    _, records = keyword_sentiment(text, [keyword], window=window)
+    _, records = keyword_sentiment(text, [keyword], window=window, mode="window")
     return [r["context"].split() for r in records]
 
 
