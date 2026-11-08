@@ -22,7 +22,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`.
+Current focus: section 0 (environment, package layout, downloader) of `docs/plan.md`, then section 1 (data verification). The package restructure in section 0.2 is approved; the layout above will change to match it.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the three top-level files. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 

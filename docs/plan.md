@@ -8,6 +8,58 @@ Working plan for the next stage of FedSpeak. It covers three areas, in the order
 
 Verification comes first because every later metric inherits any error in extraction or matching. `docs/roadmap.md` remains the list of smaller fixes. This document covers the larger pieces of work and the reasoning behind them.
 
+Before section 1, the foundation in section 0 is put in place.
+
+## 0. Foundation: environment, structure, data
+
+Decided 2026-11-08. The original PDFs lived only on an external drive that is no longer available, and the old Jupyter notebooks were not recovered. The rebuild treats federalreserve.gov as the source of truth and makes every local file reproducible.
+
+### 0.1 Environment
+
+- Plain Python in VS Code instead of Anaconda and Jupyter. Notebooks remain an option for exploration only, importing the package.
+- `uv` manages a project-local `.venv`, the Python version and a lockfile (`uv.lock`).
+- `pyproject.toml` replaces `requirements.txt` as the dependency declaration.
+
+### 0.2 Package layout
+
+`src/fedspeak.py` is split into a package, one module per pipeline stage:
+
+```
+src/fedspeak/
+  fetch.py      download minutes (PDF and HTML) and SEP pages
+  extract.py    PDF and HTML to clean text
+  match.py      single keyword matcher producing hit records
+  sentiment.py  VADER, later Loughran-McDonald
+  metrics.py    EWMA, z-scores, confidence intervals, change points
+  dots.py       dot plot parsing and metrics
+  dashboard.py  Plotly dashboard
+  cli.py        command line entry points (fetch, run, audit)
+config.toml     keywords, window, date range, paths
+tests/
+```
+
+Paths are handled with `pathlib` and read from config, so nothing is tied to one machine or drive letter.
+
+### 0.3 Data storage
+
+```
+data/
+  raw/              downloaded PDF and HTML minutes, SEP pages   (git-ignored, re-downloadable)
+  text/             cleaned text, one file per meeting          (committed, a few MB)
+  fedspeak.duckdb   hits, metrics, dot plot data                (git-ignored, rebuilt by pipeline)
+```
+
+- The downloader fetches only what is missing, waits between requests and uses a generic client name.
+- Cleaned text is committed so the analysis can run without downloading anything.
+- DuckDB replaces loose CSV outputs. Tables can be exported to CSV when needed.
+
+### 0.4 Build order
+
+1. Environment: uv, `pyproject.toml`, lockfile.
+2. Restructure into the package layout, behavior unchanged.
+3. Downloader for minutes in PDF and HTML.
+4. Section 1, data verification.
+
 ## 1. Data verification
 
 Two layers can fail independently: text extraction (PDF to text) and matching logic (text to hits and windows). Each needs its own checks.
@@ -141,14 +193,11 @@ Questions the combined data can test:
 
 Align by meeting date: the dots and the minutes describe the same meeting, even though the minutes are published later. With about 55 SEPs since 2012, report correlations with caution and treat them as prompts for reading the text, not as findings.
 
-### Scope decision
-
-This adds a second data source and a scraper, and pushes `src/fedspeak.py` beyond a single-purpose file. Decide on the module structure before building it (CLAUDE.md asks for confirmation before splitting into modules).
+Dot plot code lives in `dots.py` and its tables in the DuckDB file (see section 0).
 
 ## Open decisions
 
 - Primary text source: PDF, HTML, or HTML with PDF as fallback. Depends on 1.1 results.
 - Context window: word window or sentence based. Depends on 1.6 comparison.
 - EWMA as a replacement for the rolling mean, or shown beside it.
-- Module structure before dot plot work.
-- New dependencies: pytest (tests only), `ruptures`, a Loughran-McDonald word list.
+- New dependencies: `ruptures`, a Loughran-McDonald word list. Approved: uv, pytest (tests only), DuckDB.
