@@ -82,7 +82,9 @@ Before: `count_keywords` used `\b` regex on the whole text, while `keyword_senti
 
 After: `match.find_hits` is the only matcher. Frequency counts are unchanged; sentiment hit counts now equal them in every meeting, and the pipeline raises an error if they ever differ. Mean change in per-meeting sentiment was small (0.001 to 0.025 by keyword), but individual meetings moved by up to 0.77 ("recession", a meeting whose only mentions were "pre-recession").
 
-Open question, hyphenated compounds (`MATCH_HYPHENATED`, default True so frequency stays as before). Most common compounds in the corpus: "Treasury Inflation-Protected Securities" (102, a bond name), "inflation-indexed" (38), "employment-to-population ratio" (100, a statistic), "maximum-employment" (82, the mandate), "pre-recession" (23, a time reference). Excluding them removes 1.3 percent of "inflation" hits, 6.6 percent of "employment" and 17.2 percent of "recession".
+Decision, hyphenated compounds (2026-11-08): keywords inside hyphenated compounds are not counted, because most compounds name a security, a statistic or a time period rather than discuss the topic, and counting them inflates hits. Most common in the corpus: "Treasury Inflation-Protected Securities" (102, a bond name), "employment-to-population ratio" (100, a statistic), "inflation-indexed" (38), "pre-recession" (23, a time reference). Exception: "maximum-employment" (82) still counts, as mandate language. Settings: `MATCH_HYPHENATED = False`, `HYPHENATED_EXCEPTIONS = ["maximum-employment"]`. Double hyphens ("inflation--which") are typed dashes, not compounds, and still count.
+
+Effect across 270 meetings: inflation 12,474 to 12,312 hits (minus 1.3 percent), employment 2,830 to 2,724 (minus 3.7 percent), recession 151 to 125 (minus 17.2 percent); uncertainty and tightening unchanged. This is a deliberate change in what the frequency series measures, so results from before this decision are not directly comparable.
 
 ## Interpreting results with care
 

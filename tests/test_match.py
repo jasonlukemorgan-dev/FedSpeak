@@ -31,6 +31,20 @@ def test_hyphenated_compounds_follow_setting():
     assert excluded == []
 
 
+def test_compounds_excluded_by_default_except_listed_ones():
+    text = ("the employment-to-population ratio; the maximum-employment goal; "
+            "Maximum-Employment mandate; self-employment income; employment rose")
+    hits = find_hits(text, ["employment"])  # defaults: compounds excluded, maximum-employment allowed
+    assert [h.matched for h in hits] == ["employment", "Employment", "employment"]
+    assert text[hits[0].start - 8:hits[0].end] == "maximum-employment"
+
+
+def test_exception_list_is_configurable():
+    text = "pre-recession levels and a mild-recession scenario"
+    hits = find_hits(text, ["recession"], include_hyphenated=False, hyphenated_exceptions=["mild-recession"])
+    assert len(hits) == 1 and text[hits[0].start - 5:hits[0].end] == "mild-recession"
+
+
 def test_dashes_still_count_when_compounds_excluded():
     text = "uncertainty--inflation and inflation—as noted"
     assert len(find_hits(text, ["inflation"], include_hyphenated=False)) == 2
@@ -64,7 +78,7 @@ def test_frequency_and_sentiment_use_the_same_hits():
     sent, snippets = keyword_sentiment(text, keywords, window=5)
     for kw in keywords:
         assert freq[f"{kw}_raw"] == sent[f"{kw}_sentiment_n"] == len(snippets[kw])
-    assert freq["inflation_raw"] == 9
+    assert freq["inflation_raw"] == 6   # "inflation-protected" is a compound, excluded by default
     assert freq["price stability_raw"] == 3
 
 

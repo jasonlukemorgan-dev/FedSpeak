@@ -7,16 +7,22 @@ Matching rules
   line breaks.
 - Dashes separate words: "inflation—as", "uncertainty--inflation" are hits.
 - Hyphenated compounds ("Inflation-Protected Securities", "pre-recession",
-  "maximum-employment") are hits only when `include_hyphenated` is True
-  (config MATCH_HYPHENATED). A single hyphen joining two word characters marks a
-  compound; a double hyphen or a dash does not.
+  "employment-to-population") are not hits by default: they mostly name a
+  security, a statistic or a time period rather than discuss the topic. A single
+  hyphen joining two word characters marks a compound; a double hyphen or a dash
+  does not.
+- Compounds listed in `hyphenated_exceptions` (config HYPHENATED_EXCEPTIONS) are
+  still hits, for example "maximum-employment", the Fed's mandate language.
+- Set `include_hyphenated` (config MATCH_HYPHENATED) to True to count all compounds.
 """
 
 import re
 from bisect import bisect_right
 from dataclasses import dataclass
 
-from fedspeak.config import MATCH_HYPHENATED
+from fedspeak.config import HYPHENATED_EXCEPTIONS, MATCH_HYPHENATED
+
+COMPOUND = re.compile(r"\w+(?:-\w+)+")
 
 
 @dataclass(frozen=True)
@@ -29,23 +35,35 @@ class Hit:
     word_end: int       # index in text.split() of the word containing the last character
 
 
-def keyword_pattern(keyword, include_hyphenated=MATCH_HYPHENATED):
+def keyword_pattern(keyword):
+    """Whole-word, case-insensitive pattern; compounds are filtered in find_hits."""
     words = [re.escape(w) for w in keyword.lower().split()]
-    body = r"\s+".join(words)
-    left, right = r"(?<!\w)", r"(?!\w)"
-    if not include_hyphenated:
-        # Not part of a compound: no "word-" before, no "-word" after.
-        left += r"(?<!\w-)"
-        right += r"(?!-\w)"
-    return re.compile(left + body + right, re.IGNORECASE)
+    return re.compile(r"(?<!\w)" + r"\s+".join(words) + r"(?!\w)", re.IGNORECASE)
 
 
-def find_hits(text, keywords, include_hyphenated=MATCH_HYPHENATED):
+def _compound_around(text, start, end):
+    """The hyphenated compound a match sits in, lowercased, or None if it is not in one."""
+    if not (re.search(r"\w-$", text[max(0, start - 2):start]) or re.match(r"-\w", text[end:end + 2])):
+        return None
+    lo, hi = start, end
+    for m in COMPOUND.finditer(text, max(0, start - 200), min(len(text), end + 200)):
+        if m.start() < end and m.end() > start:
+            lo, hi = min(lo, m.start()), max(hi, m.end())
+    return text[lo:hi].lower()
+
+
+def find_hits(text, keywords, include_hyphenated=MATCH_HYPHENATED,
+              hyphenated_exceptions=HYPHENATED_EXCEPTIONS):
     """Every occurrence of every keyword in text, in document order."""
+    exceptions = {e.lower() for e in hyphenated_exceptions}
     word_starts = [m.start() for m in re.finditer(r"\S+", text)]
     hits = []
     for kw in keywords:
-        for m in keyword_pattern(kw, include_hyphenated).finditer(text):
+        for m in keyword_pattern(kw).finditer(text):
+            if not include_hyphenated:
+                compound = _compound_around(text, m.start(), m.end())
+                if compound is not None and compound not in exceptions:
+                    continue
             hits.append(Hit(
                 keyword=kw,
                 matched=m.group(0),

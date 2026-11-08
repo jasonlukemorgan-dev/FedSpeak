@@ -57,7 +57,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 
 1. `fetch.fetch_minutes` downloads, then `extract.build_text_corpus` writes `data/text/` using `extract.extract_text_from_html`.
 2. `pipeline.process_minutes` reads `data/text/`, applies the date range, calls the steps below per meeting, and adds meeting type and release date from the manifest.
-3. `match.find_hits` finds every keyword hit once per meeting (rules in the module docstring; hyphenated compounds controlled by `MATCH_HYPHENATED`). Steps 4 and 5 both use these hits, and the pipeline raises an error if their counts ever differ.
+3. `match.find_hits` finds every keyword hit once per meeting (rules in the module docstring; hyphenated compounds are excluded except those in `HYPHENATED_EXCEPTIONS`, a decision recorded in `docs/context.md`). Steps 4 and 5 both use these hits, and the pipeline raises an error if their counts ever differ.
 4. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
 5. `sentiment.keyword_sentiment` takes a 75-word window on each side of every hit, scores it with VADER, and averages per keyword per meeting.
 6. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
