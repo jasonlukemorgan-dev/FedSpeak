@@ -18,7 +18,8 @@ FedSpeak/
   src/fedspeak/
     config.py          run settings (paths, keywords, date range, window, output names)
     fetch.py           downloads minutes (HTML + PDF) from federalreserve.gov, writes the manifest
-    extract.py         date from filename, text from PDF
+    extract.py         date from filename, text from PDF and HTML, character normalization
+    verify.py          verification checks (`fedspeak verify`: PDF vs HTML comparison)
     match.py           keyword frequency
     sentiment.py       VADER score around each keyword hit
     pipeline.py        walks the PDF folder and runs the steps per meeting

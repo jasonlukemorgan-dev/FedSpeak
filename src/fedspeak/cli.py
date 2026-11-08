@@ -3,6 +3,7 @@
   fedspeak                 run the analysis (same as `fedspeak run`)
   fedspeak run
   fedspeak fetch [--start-year 1993] [--end-year 2026] [--force]
+  fedspeak verify          compare PDF and HTML text for every meeting that has both
 """
 
 import argparse
@@ -42,11 +43,16 @@ def main(argv=None):
     fetch.add_argument("--start-year", type=int, default=FETCH_START_YEAR)
     fetch.add_argument("--end-year", type=int, default=None, help="default: current year")
     fetch.add_argument("--force", action="store_true", help="download again even if files exist")
+    sub.add_parser("verify", help="compare PDF and HTML text; writes output/verify/pdf_vs_html.csv")
     args = parser.parse_args(argv)
 
     if args.command == "fetch":
         from fedspeak.fetch import fetch_minutes
         fetch_minutes(args.start_year, args.end_year, force=args.force)
+    elif args.command == "verify":
+        from fedspeak.verify import VERIFY_DIR, compare_sources, print_comparison_summary
+        print_comparison_summary(compare_sources())
+        print(f"\nDetails: {VERIFY_DIR / 'pdf_vs_html.csv'}  Extracted text: {VERIFY_DIR / 'text'}")
     else:
         run()
 

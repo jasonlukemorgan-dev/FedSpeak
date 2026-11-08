@@ -81,6 +81,8 @@ Check: the Fed publishes each set of minutes as HTML as well as PDF. Count keywo
 
 Fixes to consider once the differences are known: rejoin line-break hyphenation, strip repeated header and footer lines, or switch the primary source to HTML.
 
+Status: comparison done (`fedspeak verify`, findings in `docs/context.md` under Verification findings). HTML extractor built and checked on all 270 meetings. PDF text for 2008 to 2024 is spliced across columns and pre-2020 PDFs include the SEP, so HTML is the recommended primary source. Switching the pipeline to HTML awaits approval.
+
 ### 1.2 Matching consistency
 
 `count_keywords` and `keyword_sentiment` currently match differently:

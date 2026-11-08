@@ -1,9 +1,38 @@
-"""Meeting dates from filenames and text from PDFs."""
+"""Meeting dates from filenames and text from PDF and HTML minutes."""
 
 import re
+from pathlib import Path
 
 import pandas as pd
 import pdfplumber
+from bs4 import BeautifulSoup
+
+# Main content block of a minutes page, by site era. First match wins.
+#   #article     2010s onward
+#   #leftText    around 2008 to 2009
+#   #content     1993 to 1995
+# Pages from 1996 to 2007 have no content wrapper, so the whole document is used
+# (minus <head>). Selecting <body> instead loses text on pages whose malformed HTML
+# makes the parser close <body> early (1996-11-13 lost 90 percent of its words).
+HTML_CONTENT_SELECTORS = ["#article", "#leftText", "#content"]
+
+# Link text that appears inside the minutes: "Return to top" after sections (1990s pages
+# repeat it after every section) and "Return to text" after each footnote.
+HTML_LINK_TEXT = re.compile(r"\[?\s*(?:Return|Back)\s+to\s+(?:top|text)\.?\s*\]?", re.IGNORECASE)
+
+# Site footer that follows the minutes. Only cut when it starts near the end of the page.
+HTML_FOOTER = re.compile(r"\s(?:(?:FOMC )?Home \| (?:FOMC|Monetary Policy)\b|Last update:)", re.IGNORECASE)
+HTML_FOOTER_MAX_WORDS = 80
+
+
+def normalize_text(text):
+    """Character fixes applied to every extracted text, PDF or HTML.
+
+    - Soft hyphens (U+00AD) and zero-width joiners (U+200D) are invisible but split
+      words for matching ("al\\u00adthough"). Found in 2016 to 2024 HTML minutes.
+    - Non-breaking hyphens (U+2011, "longer\\u2011run") become ordinary hyphens.
+    """
+    return text.replace("­", "").replace("‍", "").replace("‑", "-")
 
 
 def extract_date_from_filename(filename):
@@ -26,4 +55,34 @@ def extract_text_from_pdf(filepath):
             page_text = page.extract_text()
             if page_text:
                 text += page_text + " "
+    return normalize_text(text)
+
+
+def extract_text_from_html(filepath):
+    """Minutes text from a federalreserve.gov HTML page, without site navigation.
+
+    Encoding is decided here rather than guessed: many older pages declare no charset,
+    and automatic detection can pick an unrelated encoding and garble the text. UTF-8
+    is tried first (strict, so it rarely matches by accident), then Windows-1252, the
+    usual encoding of older English web pages.
+    """
+    raw = Path(filepath).read_bytes()
+    try:
+        markup = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        markup = raw.decode("cp1252", errors="replace")
+    soup = BeautifulSoup(markup, "html.parser")
+    for tag in soup(["head", "title", "script", "style", "noscript"]):
+        tag.decompose()
+    container = next((el for sel in HTML_CONTENT_SELECTORS if (el := soup.select_one(sel))), soup)
+    text = normalize_text(container.get_text(" "))
+    # Some 1999 to 2007 pages contain U+FFFD where the Fed's own file lost a character,
+    # usually an apostrophe ("System�s"), sometimes a dash or fraction. Restore the
+    # apostrophe between letters; otherwise use a space so words are not fused together.
+    text = re.sub(r"(?<=[A-Za-z])�(?=[A-Za-z])", "'", text).replace("�", " ")
+    text = HTML_LINK_TEXT.sub(" ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    for match in HTML_FOOTER.finditer(text):
+        if len(text[match.start():].split()) <= HTML_FOOTER_MAX_WORDS:
+            return text[:match.start()].rstrip()
     return text

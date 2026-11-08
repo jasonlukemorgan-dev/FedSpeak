@@ -17,6 +17,8 @@ Newest first.
 - `PDF_DIR` now points at the downloaded PDFs. `START_DATE` and `END_DATE` in config limit the analysis to a date range (default: everything).
 - Command line: `fedspeak run` (default) and `fedspeak fetch [--start-year] [--end-year] [--force]`.
 - New dependencies: requests, beautifulsoup4. Parser tests in `tests/test_fetch.py` use fixtures copied from the real page layouts.
+- HTML text extraction (`extract.extract_text_from_html`) for all site eras, with fixed encoding handling and shared character normalization (`normalize_text`) applied to PDF and HTML text.
+- `fedspeak verify` compares PDF and HTML text for the 152 meetings with both. It found that 2008 to 2024 PDFs are spliced across columns and that pre-2020 PDFs include the Summary of Economic Projections. Full findings in `docs/context.md`.
 - First run on real minutes (2020) worked end to end. It surfaced values the verification work must explain, for example `tightening` sentiment above +0.9 from single mentions and `uncertainty` reading +0.71 in December 2020.
 
 ## Version 5: Layout spacing

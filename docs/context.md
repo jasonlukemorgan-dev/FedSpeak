@@ -52,6 +52,30 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 9. `process_pdfs` re-parses every PDF on every run. Parsing ten years takes minutes. Cache extracted text to disk.
 10. Dashboard has a long, dense legend and many overlapping lines. A keyword selector or small multiples may read better as keyword count grows.
 
+## Verification findings
+
+### 1.1 Text extraction, PDF vs HTML (2026-11-08)
+
+Run with `fedspeak verify` on the 152 meetings that have both versions (mid-2007 onward). Results in `output/verify/pdf_vs_html.csv`.
+
+**PDF extraction is unreliable for 2008 to 2024.**
+- Those PDFs use a two-column layout. pdfplumber reads across both columns line by line, splicing unrelated passages together. Example from June 2019: "the eligibility of counterparties in weak fi- could be an important factor determining whether a fa- nancial condition". Page headers come out garbled ("M__in_u_t_es_ _o_f") and attendance-list names land mid-sentence.
+- Median 130 to 240 words per meeting are split across line breaks ("tight- ening"), so keywords inside them are missed.
+- On average 3 of the 5 default keywords get a different count from the HTML in each meeting.
+- Context windows built from this text mix two unrelated passages, so sentiment scores for these years in the original version of the tool are not trustworthy.
+
+**PDFs before mid-2020 include the Summary of Economic Projections; the HTML does not.** The PDF for an SEP meeting has 5,000 to 7,000 extra words of projections narrative and tables. This accounts for most of the "uncertainty" gap (2,216 mentions in PDFs vs 890 in HTML; 1,398 of the difference is in those meetings). From late 2020 neither version includes it. Mixing the two would make frequency jump up and down with the SEP schedule for reasons unrelated to the minutes themselves.
+
+**HTML extraction agrees with clean PDFs.** In 2025 and 2026 the Fed's PDFs are single-column. There, PDF and HTML keyword counts match exactly in every meeting for all five keywords, an independent check that the HTML extractor captures the minutes text correctly.
+
+**HTML issues found and fixed** (each has a test in `tests/test_extract_html.py`):
+- Content block differs by site era (`#article`, `#leftText`, `#content`, or the whole page for 1996 to 2007).
+- 1990s pages repeat "[Return to top]" after every section; cutting at the first one lost up to 90 percent of a meeting (1996-11-13 kept 539 of 4,800 words).
+- Site footers vary ("FOMC Home | Monetary policy", "Last update:") and are cut only at the end of the page.
+- Many older pages declare no character encoding and automatic detection can choose the wrong one. Decoding is now fixed: UTF-8, else Windows-1252 (12 pages).
+- 26 pages from 1999 to 2007 contain broken characters (U+FFFD) in the Fed's own files, usually lost apostrophes. Restored as apostrophes between letters, otherwise spaces.
+- Soft hyphens inside words in 2016 to 2024 pages ("al­though") split words for matching. Removed for all text, along with zero-width joiners; non-breaking hyphens become ordinary hyphens.
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.
