@@ -136,11 +136,15 @@ Status: done. Tests cover the cases above except line-break hyphenation, which n
 
 Generate `output/audit.html` showing a random sample of 30 to 50 hits per keyword, each with the keyword highlighted, the window boundaries marked, the page number and the score. Use a fixed random seed so the sample can be regenerated. A reader marks each hit correct or incorrect. This is the only check that the context is meaningful and not just correctly counted.
 
+Status: built. `fedspeak audit` writes `output/audit/audit.html` (30 hits per keyword, seed 2026) and `audit_sample.csv`. The reader marks whether each hit is a real mention of the topic and the tone toward it; scores for every context variant are hidden until revealed. `fedspeak audit --labels <csv>` reports match precision and each variant's tone agreement with the reader. Awaiting a labelling pass.
+
 ### 1.6 Window definition
 
 75 words on each side is about 150 words and usually spans several sentences, often including other keywords. Nearby hits produce overlapping windows, so the same text is scored more than once.
 
 Option to evaluate: score the sentence (or sentence plus one on each side) around each hit. Compare the two methods on the audit sample before deciding. Keep the word window as a setting either way.
+
+Status: sentence mode built (`CONTEXT_MODE`, `SENTENCE_NEIGHBORS`) and compared on every hit (`fedspeak verify context`, findings in `docs/context.md`). Corpus evidence favors "sentence"; the default switches once the audit labels confirm it.
 
 ### Done when
 

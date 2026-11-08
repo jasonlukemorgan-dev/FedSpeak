@@ -46,7 +46,13 @@ CONTEXT_WINDOW = 75
 uv run fedspeak
 ```
 
-Run tests with `uv run pytest`. Other commands: `uv run fedspeak extract --force` rebuilds `data/text/` from the downloaded HTML, and `uv run fedspeak verify` compares PDF and HTML text.
+Run tests with `uv run pytest`. Other commands:
+
+- `uv run fedspeak extract --force` rebuilds `data/text/` from the downloaded HTML.
+- `uv run fedspeak verify sources` compares PDF and HTML text; `uv run fedspeak verify context` compares word-window and sentence scoring.
+- `uv run fedspeak audit` builds `output/audit/audit.html` for hand-labelling a random sample of hits; `uv run fedspeak audit --labels <csv>` scores the methods against those labels.
+
+`output/hits.csv` lists every keyword hit with the exact text that was scored, so any number on the dashboard can be traced to its source sentences.
 
 Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, and a plain English summary printed to the console.
 

@@ -19,7 +19,8 @@ FedSpeak/
     config.py          run settings (paths, keywords, date range, window, output names)
     fetch.py           downloads minutes (HTML + PDF) from federalreserve.gov, writes the manifest
     extract.py         date from filename, text from PDF and HTML, character normalization
-    verify.py          verification checks (`fedspeak verify`: PDF vs HTML comparison)
+    verify.py          verification checks (`fedspeak verify sources|context`)
+    audit.py           human audit page and label scoring (`fedspeak audit`)
     match.py           find_hits (the one keyword matcher) and frequency
     sentiment.py       VADER score around each keyword hit
     pipeline.py        reads data/text and runs counting and sentiment per meeting
@@ -38,7 +39,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 (zero mentions as NaN) is done; next are 1.6 sentence-based scoring as an option and 1.5 audit page showing both methods. Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 to 1.6 are built. Waiting on the user to label the audit page (`output/audit/audit.html`); `fedspeak audit --labels <csv>` then decides the default `CONTEXT_MODE` (recommendation: "sentence"). Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs go in `output/` (git-ignored): `fomc_analysis.csv`, `hits.csv`, `fomc_dashboard.html`, `verify/`.
 
