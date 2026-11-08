@@ -58,6 +58,42 @@ def extract_text_from_pdf(filepath):
     return normalize_text(text)
 
 
+def text_filename(meeting_date):
+    """data/text file name for a meeting date ("YYYY-MM-DD")."""
+    return f"fomcminutes{meeting_date.replace('-', '')}.txt"
+
+
+def build_text_corpus(manifest_path, text_dir, dates=None, force=False):
+    """Write cleaned HTML text for each meeting in the manifest to text_dir.
+
+    The HTML version is the text source for analysis: it exists for every meeting
+    since 1993, reads in the right order, and excludes the Summary of Economic
+    Projections consistently (see docs/context.md, Verification findings).
+    Existing files are kept unless force is set; rerun with force after changing
+    the extractor. `dates` limits the build to those meeting dates.
+    Returns the number of files written.
+    """
+    from fedspeak.config import PROJECT_ROOT
+
+    manifest = pd.read_csv(manifest_path, dtype=str).fillna("")
+    text_dir = Path(text_dir)
+    text_dir.mkdir(parents=True, exist_ok=True)
+    written = 0
+    for rec in manifest.itertuples():
+        if dates is not None and rec.meeting_date not in dates:
+            continue
+        if not rec.html_path:
+            print(f"  {rec.meeting_date}: no HTML version, skipped")
+            continue
+        dest = text_dir / text_filename(rec.meeting_date)
+        if dest.exists() and not force:
+            continue
+        text = extract_text_from_html(PROJECT_ROOT / rec.html_path)
+        dest.write_text(text + "\n", encoding="utf-8", newline="\n")
+        written += 1
+    return written
+
+
 def extract_text_from_html(filepath):
     """Minutes text from a federalreserve.gov HTML page, without site navigation.
 

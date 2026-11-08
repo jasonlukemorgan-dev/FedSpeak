@@ -19,6 +19,7 @@ Newest first.
 - New dependencies: requests, beautifulsoup4. Parser tests in `tests/test_fetch.py` use fixtures copied from the real page layouts.
 - HTML text extraction (`extract.extract_text_from_html`) for all site eras, with fixed encoding handling and shared character normalization (`normalize_text`) applied to PDF and HTML text.
 - `fedspeak verify` compares PDF and HTML text for the 152 meetings with both. It found that 2008 to 2024 PDFs are spliced across columns and that pre-2020 PDFs include the Summary of Economic Projections. Full findings in `docs/context.md`.
+- Text source switched from PDF to HTML for the whole pipeline. `data/text/` holds cleaned text for all 270 meetings (13 MB, committed), written by `fetch` for new meetings and rebuilt by `fedspeak extract --force`. `process_pdfs` is replaced by `process_minutes`, which reads `data/text/` and adds meeting type and release date to each row. The analysis now covers 1993 to 2026 instead of mid-2007 onward, and a full run takes about 17 seconds instead of several minutes.
 - First run on real minutes (2020) worked end to end. It surfaced values the verification work must explain, for example `tightening` sentiment above +0.9 from single mentions and `uncertainty` reading +0.71 in December 2020.
 
 ## Version 5: Layout spacing

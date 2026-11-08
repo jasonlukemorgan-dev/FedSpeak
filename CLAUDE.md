@@ -1,6 +1,6 @@
 # FedSpeak
 
-Python tool that scans FOMC minutes (PDFs), measures how often chosen keywords appear, scores the sentiment of the language around them, and plots both over time in an interactive Plotly dashboard.
+Python tool that scans FOMC minutes (1993 onward, text taken from the Fed's HTML pages), measures how often chosen keywords appear, scores the sentiment of the language around them, and plots both over time in an interactive Plotly dashboard.
 
 Project aim: read the institutional psychology of the Federal Reserve across time. The tool is meant to surface how the language, tone and preoccupations of policymakers shift before, during and after major economic events, not just what policy decisions were made.
 
@@ -22,13 +22,14 @@ FedSpeak/
     verify.py          verification checks (`fedspeak verify`: PDF vs HTML comparison)
     match.py           keyword frequency
     sentiment.py       VADER score around each keyword hit
-    pipeline.py        walks the PDF folder and runs the steps per meeting
+    pipeline.py        reads data/text and runs counting and sentiment per meeting
     dashboard.py       Plotly dashboard
     report.py          console summary and snippet inspection
     cli.py             entry point (`fedspeak`, `python -m fedspeak`)
   tests/               pytest suite
   data/
     manifest.csv       one row per meeting: dates, type, URLs, checksums (committed)
+    text/              cleaned minutes text from HTML, one file per meeting (committed)
     raw/minutes/       html/ and pdf/ downloads (git-ignored, rebuilt by `fedspeak fetch`)
   docs/
     context.md         background, decisions, known issues
@@ -37,7 +38,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 (environment, package layout, downloader) is done. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 (text source) are done; next is 1.2, one matcher shared by frequency and sentiment. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 
@@ -46,16 +47,16 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 - Windows machine, VS Code, plain Python managed by uv. Anaconda and Jupyter are no longer used. uv is installed at `~\.local\bin`.
 - Corpus: `uv run fedspeak fetch` downloads all minutes from 1993 onward (HTML and, from about 2008, PDF) into `data/raw/minutes/` and records each meeting in `data/manifest.csv`, including meeting type (scheduled, unscheduled, conference_call) and release date. It skips files already on disk, so rerunning picks up new releases. federalreserve.gov is the source of truth; the old `D:\FOMC_Minutes` folder is gone.
 - Fetch range is not the analysis range. Users choose `KEYWORDS`, `START_DATE` and `END_DATE` in `config.py` at analysis time; nothing should hardcode a period.
-- The analysis currently reads PDFs only (`PDF_DIR`), so years without PDFs are not analyzed yet. Choosing PDF vs HTML as the text source is part of verification (plan 1.1).
-- Downloaded files are named `fomcminutesYYYYMMDD.{pdf,htm}`, using the last day of the meeting. The date parser depends on this.
+- Text source is HTML, not PDF (decided 2026-11-08 after verification 1.1: 2008 to 2024 PDFs are spliced across columns and pre-2020 PDFs include the SEP). `fetch` writes cleaned text for new meetings to `data/text/`; `uv run fedspeak extract --force` rebuilds all of it and must be run after any change to `extract.py`, with the resulting text diff committed. PDFs are kept only for cross-checks (`fedspeak verify`).
+- Downloaded and text files are named `fomcminutesYYYYMMDD.{pdf,htm,txt}`, using the last day of the meeting. The date parser depends on this.
 - Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
 - Run: `uv run fedspeak fetch`, then `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest` (no network access in tests).
 - Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, console summary.
 
 ## Pipeline (`src/fedspeak/`)
 
-1. `pipeline.process_pdfs` walks the folder, parses dates, calls the steps below per file.
-2. `extract.extract_text_from_pdf` uses pdfplumber.
+1. `fetch.fetch_minutes` downloads, then `extract.build_text_corpus` writes `data/text/` using `extract.extract_text_from_html`.
+2. `pipeline.process_minutes` reads `data/text/`, applies the date range, calls the steps below per meeting, and adds meeting type and release date from the manifest.
 3. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
 4. `sentiment.keyword_sentiment` takes a 75-word window on each side of every keyword hit, scores it with VADER, and averages per keyword per meeting.
 5. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.

@@ -27,7 +27,9 @@ Download the minutes:
 uv run fedspeak fetch
 ```
 
-This downloads every set of FOMC minutes from 1993 onward from federalreserve.gov (HTML, plus PDF where the Fed publishes one) into `data/raw/minutes/`, and records each meeting in `data/manifest.csv` with its meeting type, release date, source URLs and file checksums. Files already downloaded are skipped, so rerun it after each FOMC release to add the new minutes. Use `--start-year` and `--end-year` to limit the range.
+This downloads every set of FOMC minutes from 1993 onward from federalreserve.gov (HTML, plus PDF where the Fed publishes one) into `data/raw/minutes/`, records each meeting in `data/manifest.csv` with its meeting type, release date, source URLs and file checksums, and writes the cleaned text of each meeting to `data/text/`. Files already downloaded are skipped, so rerun it after each FOMC release to add the new minutes. Use `--start-year` and `--end-year` to limit the range.
+
+The cleaned text is already in the repository, so the analysis runs without downloading anything. Text comes from the HTML version of the minutes: the PDFs for 2008 to 2024 use a two-column layout that PDF extraction splices together, and PDFs before 2020 include the Summary of Economic Projections. Details in `docs/context.md`.
 
 Choose what to analyze in `src/fedspeak/config.py`:
 
@@ -44,7 +46,7 @@ CONTEXT_WINDOW = 75
 uv run fedspeak
 ```
 
-Run tests with `uv run pytest`.
+Run tests with `uv run pytest`. Other commands: `uv run fedspeak extract --force` rebuilds `data/text/` from the downloaded HTML, and `uv run fedspeak verify` compares PDF and HTML text.
 
 Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, and a plain English summary printed to the console.
 

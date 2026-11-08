@@ -22,7 +22,6 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 ## 3. Performance
 
-- Cache extracted PDF text to disk and skip files already processed.
 - Write outputs to an `output/` folder.
 
 ## 4. Usability

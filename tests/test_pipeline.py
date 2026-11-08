@@ -1,0 +1,60 @@
+"""Text corpus build and the analysis loop over data/text."""
+
+import pandas as pd
+
+from fedspeak.extract import build_text_corpus, text_filename
+from fedspeak.pipeline import process_minutes
+
+KW = ["inflation", "recession"]
+
+
+def make_corpus(tmp_path):
+    text_dir = tmp_path / "text"
+    text_dir.mkdir()
+    for date, text in [
+        ("2020-01-29", "Inflation remained low. " * 10),
+        ("2020-03-15", "Participants saw a risk of recession and weak inflation. " * 5),
+        ("2021-01-27", "Inflation was expected to rise. " * 8),
+    ]:
+        (text_dir / text_filename(date)).write_text(text, encoding="utf-8")
+    manifest = tmp_path / "manifest.csv"
+    pd.DataFrame({
+        "meeting_date": ["2020-01-29", "2020-03-15", "2021-01-27"],
+        "meeting_type": ["scheduled", "unscheduled", "scheduled"],
+        "release_date": ["2020-02-19", "2020-04-08", "2021-02-17"],
+    }).to_csv(manifest, index=False)
+    return text_dir, manifest
+
+
+def test_reads_every_meeting_and_adds_manifest_fields(tmp_path):
+    text_dir, manifest = make_corpus(tmp_path)
+    df, _ = process_minutes(text_dir, KW, manifest_path=manifest)
+    assert list(df.date.dt.strftime("%Y-%m-%d")) == ["2020-01-29", "2020-03-15", "2021-01-27"]
+    assert list(df.meeting_type) == ["scheduled", "unscheduled", "scheduled"]
+    assert df.loc[1, "release_date"] == "2020-04-08"
+    assert df.loc[1, "recession_raw"] == 5
+
+
+def test_date_range_is_inclusive(tmp_path):
+    text_dir, manifest = make_corpus(tmp_path)
+    df, _ = process_minutes(text_dir, KW, start_date="2020-03-15", end_date="2021-01-27")
+    assert list(df.date.dt.strftime("%Y-%m-%d")) == ["2020-03-15", "2021-01-27"]
+
+
+def test_empty_range_returns_empty_frame(tmp_path):
+    text_dir, _ = make_corpus(tmp_path)
+    df, snippets = process_minutes(text_dir, KW, start_date="2030-01-01")
+    assert df.empty and snippets == {}
+
+
+def test_build_text_corpus_uses_html_and_skips_existing(tmp_path, monkeypatch):
+    import fedspeak.config as config
+    monkeypatch.setattr(config, "PROJECT_ROOT", tmp_path)
+    (tmp_path / "a.htm").write_text("<html><body><div id='article'><p>Inflation rose.</p></div></body></html>")
+    manifest = tmp_path / "manifest.csv"
+    pd.DataFrame({"meeting_date": ["2023-02-01", "1993-02-03"], "html_path": ["a.htm", ""]}).to_csv(manifest, index=False)
+    out = tmp_path / "text"
+    assert build_text_corpus(manifest, out) == 1          # 1993 row has no HTML and is skipped
+    assert (out / "fomcminutes20230201.txt").read_text(encoding="utf-8") == "Inflation rose.\n"
+    assert build_text_corpus(manifest, out) == 0          # already there
+    assert build_text_corpus(manifest, out, force=True) == 1

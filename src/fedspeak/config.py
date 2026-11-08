@@ -7,12 +7,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_MINUTES_DIR = DATA_DIR / "raw" / "minutes"   # html/ and pdf/ subfolders, re-downloadable
 MANIFEST_CSV = DATA_DIR / "manifest.csv"         # one row per meeting: dates, type, URLs, checksums
+TEXT_DIR = DATA_DIR / "text"                     # cleaned minutes text from HTML, one file per meeting (committed)
 
 # --- Fetching ---
 FETCH_START_YEAR = 1993   # first year of minutes in their current form
 
 # --- Analysis ---
-PDF_DIR = RAW_MINUTES_DIR / "pdf"
 KEYWORDS = ["uncertainty", "inflation", "employment", "recession", "tightening"]
 START_DATE = None         # "YYYY-MM-DD" to limit the analysis, None for no lower limit
 END_DATE = None           # "YYYY-MM-DD", None for no upper limit

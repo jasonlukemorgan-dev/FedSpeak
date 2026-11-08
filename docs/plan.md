@@ -81,7 +81,7 @@ Check: the Fed publishes each set of minutes as HTML as well as PDF. Count keywo
 
 Fixes to consider once the differences are known: rejoin line-break hyphenation, strip repeated header and footer lines, or switch the primary source to HTML.
 
-Status: comparison done (`fedspeak verify`, findings in `docs/context.md` under Verification findings). HTML extractor built and checked on all 270 meetings. PDF text for 2008 to 2024 is spliced across columns and pre-2020 PDFs include the SEP, so HTML is the recommended primary source. Switching the pipeline to HTML awaits approval.
+Status: comparison done (`fedspeak verify`, findings in `docs/context.md` under Verification findings). HTML extractor built and checked on all 270 meetings. PDF text for 2008 to 2024 is spliced across columns and pre-2020 PDFs include the SEP, so HTML is the primary source. Approved and switched 2026-11-08: the pipeline reads `data/text/`, built from HTML for all 270 meetings. PDFs remain for cross-checks only.
 
 ### 1.2 Matching consistency
 
@@ -204,7 +204,6 @@ Dot plot code lives in `dots.py` and its tables in the DuckDB file (see section 
 
 ## Open decisions
 
-- Primary text source: PDF, HTML, or HTML with PDF as fallback. Depends on 1.1 results.
 - Context window: word window or sentence based. Depends on 1.6 comparison.
 - EWMA as a replacement for the rolling mean, or shown beside it.
 - New dependencies: `ruptures`, a Loughran-McDonald word list. Approved: uv, pytest (tests only), DuckDB.

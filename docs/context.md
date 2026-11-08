@@ -49,7 +49,7 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 6. `keyword_sentiment` compares single tokens, so multi-word keywords never match there even though `count_keywords` would match them. Needs phrase-aware matching.
 7. Fixed in version 6: unused `import nltk` removed.
 8. Stored snippets are cut at 200 characters, so `export_snippets` re-scores shortened text and can show scores that differ from those behind the charts. Store the score alongside the snippet instead of recomputing.
-9. `process_pdfs` re-parses every PDF on every run. Parsing ten years takes minutes. Cache extracted text to disk.
+9. Fixed in version 6: text is extracted once into `data/text/` and the analysis reads those files.
 10. Dashboard has a long, dense legend and many overlapping lines. A keyword selector or small multiples may read better as keyword count grows.
 
 ## Verification findings
