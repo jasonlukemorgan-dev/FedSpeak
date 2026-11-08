@@ -16,7 +16,8 @@ FedSpeak/
   uv.lock              exact resolved versions, committed
   .python-version      pinned Python version (3.12)
   src/fedspeak/
-    config.py          run settings (path, keywords, window, output names)
+    config.py          run settings (paths, keywords, date range, window, output names)
+    fetch.py           downloads minutes (HTML + PDF) from federalreserve.gov, writes the manifest
     extract.py         date from filename, text from PDF
     match.py           keyword frequency
     sentiment.py       VADER score around each keyword hit
@@ -25,6 +26,9 @@ FedSpeak/
     report.py          console summary and snippet inspection
     cli.py             entry point (`fedspeak`, `python -m fedspeak`)
   tests/               pytest suite
+  data/
+    manifest.csv       one row per meeting: dates, type, URLs, checksums (committed)
+    raw/minutes/       html/ and pdf/ downloads (git-ignored, rebuilt by `fedspeak fetch`)
   docs/
     context.md         background, decisions, known issues
     changelog.md       what changed and why
@@ -32,17 +36,19 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 0 of `docs/plan.md`. Environment (0.1) and package layout (0.2) are done; next is the downloader, then section 1 (data verification). Add new modules (`fetch.py`, `metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 (environment, package layout, downloader) is done. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 
 ## How it runs
 
 - Windows machine, VS Code, plain Python managed by uv. Anaconda and Jupyter are no longer used. uv is installed at `~\.local\bin`.
-- Input: folder of FOMC minutes PDFs, currently `D:\FOMC_Minutes`, searched recursively with `os.walk`. That folder lived on an external drive that is not available; the downloader in `docs/plan.md` section 0 replaces it.
-- Filenames contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD` (for example `fomcminutes20230201.pdf`). The date parser depends on this.
+- Corpus: `uv run fedspeak fetch` downloads all minutes from 1993 onward (HTML and, from about 2008, PDF) into `data/raw/minutes/` and records each meeting in `data/manifest.csv`, including meeting type (scheduled, unscheduled, conference_call) and release date. It skips files already on disk, so rerunning picks up new releases. federalreserve.gov is the source of truth; the old `D:\FOMC_Minutes` folder is gone.
+- Fetch range is not the analysis range. Users choose `KEYWORDS`, `START_DATE` and `END_DATE` in `config.py` at analysis time; nothing should hardcode a period.
+- The analysis currently reads PDFs only (`PDF_DIR`), so years without PDFs are not analyzed yet. Choosing PDF vs HTML as the text source is part of verification (plan 1.1).
+- Downloaded files are named `fomcminutesYYYYMMDD.{pdf,htm}`, using the last day of the meeting. The date parser depends on this.
 - Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
-- Run: `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest`.
+- Run: `uv run fedspeak fetch`, then `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest` (no network access in tests).
 - Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, console summary.
 
 ## Pipeline (`src/fedspeak/`)

@@ -1,13 +1,23 @@
-"""Command line entry point: `fedspeak` or `python -m fedspeak`."""
+"""Command line entry point: `fedspeak` or `python -m fedspeak`.
 
-from fedspeak.config import KEYWORDS, OUTPUT_CSV, PDF_DIR
-from fedspeak.dashboard import build_dashboard
-from fedspeak.pipeline import process_pdfs
-from fedspeak.report import export_snippets, print_summary
+  fedspeak                 run the analysis (same as `fedspeak run`)
+  fedspeak run
+  fedspeak fetch [--start-year 1993] [--end-year 2026] [--force]
+"""
+
+import argparse
+
+from fedspeak.config import (
+    END_DATE, FETCH_START_YEAR, KEYWORDS, OUTPUT_CSV, PDF_DIR, START_DATE,
+)
 
 
-def main():
-    df, all_snippets = process_pdfs(PDF_DIR, KEYWORDS)
+def run():
+    from fedspeak.dashboard import build_dashboard
+    from fedspeak.pipeline import process_pdfs
+    from fedspeak.report import export_snippets, print_summary
+
+    df, all_snippets = process_pdfs(PDF_DIR, KEYWORDS, START_DATE, END_DATE)
 
     if df.empty:
         print("No data to process. Exiting.")
@@ -22,6 +32,23 @@ def main():
 
     # Inspect top snippets for a keyword of interest
     export_snippets(all_snippets, "uncertainty", top_n=10)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="fedspeak", description="FOMC minutes keyword and sentiment analysis.")
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("run", help="run the analysis on downloaded minutes (default)")
+    fetch = sub.add_parser("fetch", help="download minutes from federalreserve.gov")
+    fetch.add_argument("--start-year", type=int, default=FETCH_START_YEAR)
+    fetch.add_argument("--end-year", type=int, default=None, help="default: current year")
+    fetch.add_argument("--force", action="store_true", help="download again even if files exist")
+    args = parser.parse_args(argv)
+
+    if args.command == "fetch":
+        from fedspeak.fetch import fetch_minutes
+        fetch_minutes(args.start_year, args.end_year, force=args.force)
+    else:
+        run()
 
 
 if __name__ == "__main__":

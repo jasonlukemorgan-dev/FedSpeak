@@ -16,7 +16,9 @@ Name: FedSpeak, an existing term for the deliberately vague language of central 
 
 ## Current state
 
-Working end to end on roughly ten years of minutes (about 2016 to early 2026) stored in `D:\FOMC_Minutes`. The dashboard renders correctly in Jupyter under Anaconda on Windows.
+Originally run on roughly ten years of minutes (about 2016 to early 2026) stored in `D:\FOMC_Minutes`, an external drive that is no longer available. The 2016 start was chosen for a past research project and is not a project default.
+
+Since version 6 the corpus is downloaded from federalreserve.gov with `fedspeak fetch` (1993 onward) and the analysis runs from VS Code with uv instead of Jupyter. Users choose keywords and date range per run.
 
 Default keywords: uncertainty, inflation, employment, recession, tightening.
 

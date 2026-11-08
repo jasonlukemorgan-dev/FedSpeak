@@ -1,3 +1,7 @@
+# Downloaded source documents (re-downloadable with `fedspeak fetch`)
+data/raw/
+*.part
+
 # Generated outputs
 output/
 fomc_analysis.csv

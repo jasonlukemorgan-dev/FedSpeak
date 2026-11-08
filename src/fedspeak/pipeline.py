@@ -11,7 +11,11 @@ from fedspeak.match import count_keywords
 from fedspeak.sentiment import keyword_sentiment
 
 
-def process_pdfs(pdf_dir, keywords):
+def process_pdfs(pdf_dir, keywords, start_date=None, end_date=None):
+    """Process every dated PDF under pdf_dir, optionally limited to meetings
+    between start_date and end_date (inclusive, "YYYY-MM-DD" or None)."""
+    start = pd.Timestamp(start_date) if start_date else None
+    end = pd.Timestamp(end_date) if end_date else None
     results = []
     all_snippets = defaultdict(list)
 
@@ -34,6 +38,8 @@ def process_pdfs(pdf_dir, keywords):
         if not date:
             print(f"  Skipping {filename}: couldn't parse date.")
             continue
+        if (start is not None and date < start) or (end is not None and date > end):
+            continue
 
         text = extract_text_from_pdf(filepath)
         freq = count_keywords(text, keywords)
@@ -44,6 +50,10 @@ def process_pdfs(pdf_dir, keywords):
                 all_snippets[kw].append({"date": date, "snippet": s})
 
         results.append({"date": date, "filename": filename, **freq, **sentiments})
+
+    if not results:
+        print("No meetings fall inside the selected date range.")
+        return pd.DataFrame(), {}
 
     df = pd.DataFrame(results).sort_values("date").reset_index(drop=True)
     return df, all_snippets

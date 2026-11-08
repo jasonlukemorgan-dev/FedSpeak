@@ -12,6 +12,12 @@ Newest first.
 - Equivalence check: the old script and the new package were run on the same synthetic meetings (three dated, one undated, nested subfolders). The data table, every snippet, the full console output, date parsing and the dashboard file size were identical.
 - New entry points: `uv run fedspeak` and `python -m fedspeak`.
 - First tests in `tests/test_basics.py`: date parsing, frequency per 1,000 words, case and partial-word matching, empty text.
+- Downloader: `fedspeak fetch` collects minutes from 1993 onward. Links come from the FOMC calendar page (recent years) and the per-year historical pages (older years), read together with each meeting's heading and release date. Unscheduled meetings are included and tagged by `meeting_type`. Requests are spaced one second apart with retries, and files already on disk are skipped.
+- `data/manifest.csv` records each meeting's date, label, type, release date, source URLs, local paths, SHA-256 checksums, sizes and fetch time.
+- `PDF_DIR` now points at the downloaded PDFs. `START_DATE` and `END_DATE` in config limit the analysis to a date range (default: everything).
+- Command line: `fedspeak run` (default) and `fedspeak fetch [--start-year] [--end-year] [--force]`.
+- New dependencies: requests, beautifulsoup4. Parser tests in `tests/test_fetch.py` use fixtures copied from the real page layouts.
+- First run on real minutes (2020) worked end to end. It surfaced values the verification work must explain, for example `tightening` sentiment above +0.9 from single mentions and `uncertainty` reading +0.71 in December 2020.
 
 ## Version 5: Layout spacing
 

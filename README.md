@@ -21,15 +21,22 @@ uv sync
 
 This creates a local `.venv` with the pinned Python version (3.12) and the exact package versions in `uv.lock`.
 
-Edit the settings in `src/fedspeak/config.py`:
+Download the minutes:
 
-```python
-PDF_DIR = "D:\\FOMC_Minutes"
-KEYWORDS = ["uncertainty", "inflation", "employment", "recession", "tightening"]
-CONTEXT_WINDOW = 75
+```
+uv run fedspeak fetch
 ```
 
-PDF filenames must contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD`. Subfolders are searched automatically. Minutes can be downloaded from federalreserve.gov/monetarypolicy/fomc_historical.htm.
+This downloads every set of FOMC minutes from 1993 onward from federalreserve.gov (HTML, plus PDF where the Fed publishes one) into `data/raw/minutes/`, and records each meeting in `data/manifest.csv` with its meeting type, release date, source URLs and file checksums. Files already downloaded are skipped, so rerun it after each FOMC release to add the new minutes. Use `--start-year` and `--end-year` to limit the range.
+
+Choose what to analyze in `src/fedspeak/config.py`:
+
+```python
+KEYWORDS = ["uncertainty", "inflation", "employment", "recession", "tightening"]
+START_DATE = None   # e.g. "2016-01-01"
+END_DATE = None
+CONTEXT_WINDOW = 75
+```
 
 ## Run
 

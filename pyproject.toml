@@ -5,9 +5,11 @@ description = "Keyword frequency and sentiment analysis of Federal Reserve FOMC 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
     "pandas>=3.1.1",
     "pdfplumber>=0.11.10",
     "plotly>=7.1.0",
+    "requests>=2.34.2",
     "tqdm>=4.70.1",
     "vadersentiment>=3.3.2",
 ]

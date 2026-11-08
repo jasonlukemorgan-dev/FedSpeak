@@ -52,6 +52,9 @@ data/
 ```
 
 - The downloader fetches only what is missing, waits between requests and uses a generic client name.
+- Corpus scope (decided 2026-11-08): all minutes from 1993 onward, the start of minutes in their current form. Earlier record types (Memoranda of Discussion, Records of Policy Actions) and transcripts are different documents and are not mixed in; if added later, they go in as separate document types. Unscheduled meetings are included and tagged so they can be filtered.
+- Fetch range and analysis range are separate. The corpus is fetched once; keywords and date range are chosen at analysis time.
+- Status: downloader done (`fetch.py`, `data/manifest.csv`). Raw files are stored as described above. The cleaned text folder and DuckDB arrive with section 1, once the text source (PDF or HTML) is chosen.
 - Cleaned text is committed so the analysis can run without downloading anything.
 - DuckDB replaces loose CSV outputs. Tables can be exported to CSV when needed.
 
