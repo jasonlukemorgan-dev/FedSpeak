@@ -1,7 +1,5 @@
 """Console output: plain English summary and snippet inspection."""
 
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
 
 def print_summary(df, keywords):
     print("=" * 60)
@@ -48,19 +46,21 @@ The faint red shading marks the COVID recession (Feb-Apr 2020).
     print()
 
 
-def export_snippets(all_snippets, keyword, top_n=20):
+def export_snippets(hits, keyword, top_n=20, chars=160):
     """
     Print the most extreme sentiment snippets for a keyword. Useful for
     sanity-checking that VADER is picking up on the right context.
-    """
-    analyzer = SentimentIntensityAnalyzer()
-    records = all_snippets.get(keyword, [])
-    scored = []
-    for r in records:
-        score = analyzer.polarity_scores(r["snippet"])["compound"]
-        scored.append({**r, "score": score})
-    scored.sort(key=lambda x: abs(x["score"]), reverse=True)
 
-    print(f"\n--- Top {top_n} most sentiment-charged '{keyword}' snippets ---")
-    for rec in scored[:top_n]:
-        print(f"  [{rec['date'].date()}] score={rec['score']:+.3f}  \"{rec['snippet'][:120]}...\"")
+    Uses the scores stored on each hit record (the same scores behind the charts);
+    the full context of every hit is in output/hits.csv. Console lines show the
+    text around the keyword, shortened to `chars` characters.
+    """
+    rows = hits[hits.keyword == keyword]
+    rows = rows.reindex(rows.score.abs().sort_values(ascending=False).index).head(top_n)
+
+    print(f"\n--- Top {len(rows)} most sentiment-charged '{keyword}' snippets ---")
+    for r in rows.itertuples():
+        words = r.context.split()
+        mid = r.words_left   # index of the keyword inside the context
+        excerpt = " ".join(words[max(0, mid - 12):mid + 14])
+        print(f"  [{r.date.date()}] score={r.score:+.3f}  \"...{excerpt[:chars]}...\"")

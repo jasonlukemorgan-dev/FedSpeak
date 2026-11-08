@@ -149,6 +149,7 @@ def build_dashboard(df, keywords):
     fig.update_xaxes(title_text="Frequency (per 1k words)", row=3, col=1)
     fig.update_yaxes(title_text="Sentiment Score", row=3, col=1)
 
+    DASHBOARD_HTML.parent.mkdir(parents=True, exist_ok=True)
     fig.write_html(DASHBOARD_HTML)
     print(f"Dashboard saved to {DASHBOARD_HTML}")
     fig.show()

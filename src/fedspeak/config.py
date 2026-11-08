@@ -19,5 +19,10 @@ END_DATE = None           # "YYYY-MM-DD", None for no upper limit
 MATCH_HYPHENATED = False  # count keywords inside hyphenated compounds ("pre-recession", "Inflation-Protected")?
 HYPHENATED_EXCEPTIONS = ["maximum-employment"]   # compounds that still count (mandate language)
 CONTEXT_WINDOW = 75       # words on each side of keyword to extract for sentiment
-OUTPUT_CSV = "fomc_analysis.csv"
-DASHBOARD_HTML = "fomc_dashboard.html"
+
+# --- Outputs (git-ignored) ---
+OUTPUT_DIR = PROJECT_ROOT / "output"
+OUTPUT_CSV = OUTPUT_DIR / "fomc_analysis.csv"      # one row per meeting
+HITS_CSV = OUTPUT_DIR / "hits.csv"                 # one row per keyword hit, with scored context
+DASHBOARD_HTML = OUTPUT_DIR / "fomc_dashboard.html"
+SNIPPETS_PER_KEYWORD = 3  # most sentiment-charged snippets printed per keyword after a run

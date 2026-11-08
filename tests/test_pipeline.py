@@ -1,6 +1,7 @@
 """Text corpus build and the analysis loop over data/text."""
 
 import pandas as pd
+import pytest
 
 from fedspeak.extract import build_text_corpus, text_filename
 from fedspeak.pipeline import process_minutes
@@ -43,8 +44,22 @@ def test_date_range_is_inclusive(tmp_path):
 
 def test_empty_range_returns_empty_frame(tmp_path):
     text_dir, _ = make_corpus(tmp_path)
-    df, snippets = process_minutes(text_dir, KW, start_date="2030-01-01")
-    assert df.empty and snippets == {}
+    df, hits = process_minutes(text_dir, KW, start_date="2030-01-01")
+    assert df.empty and hits.empty
+
+
+def test_hit_table_matches_meeting_counts(tmp_path):
+    text_dir, manifest = make_corpus(tmp_path)
+    df, hits = process_minutes(text_dir, KW, manifest_path=manifest)
+    for kw in KW:
+        per_meeting = hits[hits.keyword == kw].groupby("date").size()
+        expected = df.set_index("date")[f"{kw}_raw"]
+        assert per_meeting.reindex(expected.index, fill_value=0).tolist() == expected.tolist()
+        # Average sentiment per meeting is exactly the mean of the stored hit scores.
+        means = hits[hits.keyword == kw].groupby("date").score.mean()
+        for date, mean in means.items():
+            assert df.set_index("date").loc[date, f"{kw}_sentiment"] == pytest.approx(mean)
+    assert set(hits.meeting_type) == {"scheduled", "unscheduled"}
 
 
 def test_build_text_corpus_uses_html_and_skips_existing(tmp_path, monkeypatch):

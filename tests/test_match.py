@@ -75,16 +75,16 @@ def test_frequency_and_sentiment_use_the_same_hits():
             "inflation's path. Price stability matters. ") * 3
     keywords = ["inflation", "price stability"]
     freq = count_keywords(text, keywords)
-    sent, snippets = keyword_sentiment(text, keywords, window=5)
+    sent, records = keyword_sentiment(text, keywords, window=5)
     for kw in keywords:
-        assert freq[f"{kw}_raw"] == sent[f"{kw}_sentiment_n"] == len(snippets[kw])
+        assert freq[f"{kw}_raw"] == sent[f"{kw}_sentiment_n"] == sum(r["keyword"] == kw for r in records)
     assert freq["inflation_raw"] == 6   # "inflation-protected" is a compound, excluded by default
     assert freq["price stability_raw"] == 3
 
 
 def _window_words(text, keyword, window):
-    _, snippets = keyword_sentiment(text, [keyword], window=window)
-    return [s.split() for s in snippets[keyword]]
+    _, records = keyword_sentiment(text, [keyword], window=window)
+    return [r["context"].split() for r in records]
 
 
 def test_window_takes_exact_words_each_side():

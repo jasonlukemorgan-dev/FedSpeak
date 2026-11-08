@@ -38,9 +38,9 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0, 1.1 (text source) and 1.2 (shared matcher) are done; next is 1.3, full hit records written to output. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; next is 1.4 (remaining tests, zero mentions as NaN), then 1.5 audit page and 1.6 sentence-based windows. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
-Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
+Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs go in `output/` (git-ignored): `fomc_analysis.csv`, `hits.csv`, `fomc_dashboard.html`, `verify/`.
 
 ## How it runs
 
@@ -51,7 +51,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 - Downloaded and text files are named `fomcminutesYYYYMMDD.{pdf,htm,txt}`, using the last day of the meeting. The date parser depends on this.
 - Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
 - Run: `uv run fedspeak fetch`, then `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest` (no network access in tests).
-- Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, console summary.
+- Outputs in `output/`: `fomc_analysis.csv` (one row per meeting), `hits.csv` (one row per keyword hit with scored context, the audit trail behind every number), `fomc_dashboard.html`, console summary.
 
 ## Pipeline (`src/fedspeak/`)
 
@@ -59,10 +59,10 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 2. `pipeline.process_minutes` reads `data/text/`, applies the date range, calls the steps below per meeting, and adds meeting type and release date from the manifest.
 3. `match.find_hits` finds every keyword hit once per meeting (rules in the module docstring; hyphenated compounds are excluded except those in `HYPHENATED_EXCEPTIONS`, a decision recorded in `docs/context.md`). Steps 4 and 5 both use these hits, and the pipeline raises an error if their counts ever differ.
 4. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
-5. `sentiment.keyword_sentiment` takes a 75-word window on each side of every hit, scores it with VADER, and averages per keyword per meeting.
+5. `sentiment.score_hits` takes a 75-word window on each side of every hit, scores it with VADER once, and returns a full record per hit; `keyword_sentiment` averages those scores per keyword per meeting.
 6. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
 7. `report.print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
-8. `report.export_snippets` prints the most sentiment-charged snippets for one keyword as a sanity check.
+8. `report.export_snippets` prints the most sentiment-charged snippets for each keyword (stored scores, `SNIPPETS_PER_KEYWORD` each) as a sanity check.
 
 ## Current dashboard settings (do not revert without asking)
 
@@ -81,9 +81,8 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 
 See `docs/context.md` for detail. Short list:
 
-1. `export_snippets` is called with a hardcoded `"uncertainty"`.
-2. Recession shading is hardcoded to COVID only.
-3. Months with zero keyword mentions get a sentiment of 0, which looks identical to genuinely neutral tone. Should be NaN.
-4. The "4-meeting average" label says about one year in the summary text, but the FOMC meets eight times a year, so four meetings is about six months.
-5. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
-6. Snippets are truncated to 200 characters when stored, so `export_snippets` re-scores truncated text and can disagree with the score used in the charts.
+1. Recession shading is hardcoded to COVID only.
+2. Months with zero keyword mentions get a sentiment of 0, which looks identical to genuinely neutral tone. Should be NaN.
+3. The "4-meeting average" label says about one year in the summary text, but the FOMC meets eight times a year, so four meetings is about six months.
+4. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
+5. The 75-word window overlaps heavily between hits and picks up tone from unrelated sentences (see `docs/context.md`, 1.3). Plan 1.6.

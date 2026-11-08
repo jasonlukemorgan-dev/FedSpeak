@@ -115,6 +115,8 @@ Replace the truncated snippet strings with a full record per hit:
 
 Write hits to `output/hits.csv`. This closes known issue 8 (scores recomputed on truncated text) and makes every chart value traceable to its source text.
 
+Status: done, with HTML text there is no page number, so character offsets locate each hit instead. Added `window_overlap_words`. Findings in `docs/context.md`.
+
 ### 1.4 Automated tests
 
 Add `tests/` with pytest and small synthetic texts where the correct answer is known:

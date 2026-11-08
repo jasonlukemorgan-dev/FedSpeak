@@ -12,7 +12,8 @@
 import argparse
 
 from fedspeak.config import (
-    END_DATE, FETCH_START_YEAR, KEYWORDS, MANIFEST_CSV, OUTPUT_CSV, START_DATE, TEXT_DIR,
+    END_DATE, FETCH_START_YEAR, HITS_CSV, KEYWORDS, MANIFEST_CSV, OUTPUT_CSV, SNIPPETS_PER_KEYWORD,
+    START_DATE, TEXT_DIR,
 )
 
 
@@ -21,21 +22,25 @@ def run():
     from fedspeak.pipeline import process_minutes
     from fedspeak.report import export_snippets, print_summary
 
-    df, all_snippets = process_minutes(TEXT_DIR, KEYWORDS, START_DATE, END_DATE, MANIFEST_CSV)
+    df, hits = process_minutes(TEXT_DIR, KEYWORDS, START_DATE, END_DATE, MANIFEST_CSV)
 
     if df.empty:
         print("No data to process. Exiting.")
         return
 
+    OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUTPUT_CSV, index=False)
-    print(f"Saved to {OUTPUT_CSV}\n")
+    hits.to_csv(HITS_CSV, index=False)
+    print(f"Saved {len(df)} meetings to {OUTPUT_CSV}")
+    print(f"Saved {len(hits)} keyword hits to {HITS_CSV}\n")
     print(df[["date"] + KEYWORDS + [f"{kw}_sentiment" for kw in KEYWORDS]].to_string(index=False))
 
     build_dashboard(df, KEYWORDS)
     print_summary(df, KEYWORDS)
 
-    # Inspect top snippets for a keyword of interest
-    export_snippets(all_snippets, "uncertainty", top_n=10)
+    # Most sentiment-charged snippets for every keyword, as a sanity check
+    for kw in KEYWORDS:
+        export_snippets(hits, kw, top_n=SNIPPETS_PER_KEYWORD)
 
 
 def extract(force=False, dates=None):

@@ -41,14 +41,14 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 
 ## Known issues
 
-1. `export_snippets(all_snippets, "uncertainty", ...)` hardcodes the keyword.
+1. Fixed in version 6: snippets are printed for every keyword in `KEYWORDS`.
 2. Recession shading covers only Feb to Apr 2020. Other episodes (2022 inflation surge, rate hike cycles) are not marked. Consider a configurable list of events.
 3. Zero-mention meetings get sentiment 0, indistinguishable from neutral. The flat zero stretches visible on the dotted lines in panel 2 for rare words like "recession" and "tightening" are partly this artifact. Return NaN when there are no mentions and let Plotly leave gaps (or use `connectgaps=False`). The `_sentiment_n` column already holds mention counts and could drive marker size or filtering.
 4. The summary text and earlier discussion describe the 4-meeting rolling average as about one year. The FOMC holds eight scheduled meetings a year, so four meetings is about six months. Either change the window to 8 or fix the wording.
 5. VADER is not a finance lexicon. Words like "tightening" and "inflation" carry specific meaning in this setting. Suggested overrides: tightening -0.5, accommodative +0.4, headwinds -0.6, resilient +0.5, applied through `analyzer.lexicon.update(...)`.
 6. Fixed in version 6: `match.find_hits` handles multi-word keywords, and frequency and sentiment share it.
 7. Fixed in version 6: unused `import nltk` removed.
-8. Stored snippets are cut at 200 characters, so `export_snippets` re-scores shortened text and can show scores that differ from those behind the charts. Store the score alongside the snippet instead of recomputing.
+8. Fixed in version 6: each hit stores its full context and score; `export_snippets` uses the stored score.
 9. Fixed in version 6: text is extracted once into `data/text/` and the analysis reads those files.
 10. Dashboard has a long, dense legend and many overlapping lines. A keyword selector or small multiples may read better as keyword count grows.
 
@@ -85,6 +85,17 @@ After: `match.find_hits` is the only matcher. Frequency counts are unchanged; se
 Decision, hyphenated compounds (2026-11-08): keywords inside hyphenated compounds are not counted, because most compounds name a security, a statistic or a time period rather than discuss the topic, and counting them inflates hits. Most common in the corpus: "Treasury Inflation-Protected Securities" (102, a bond name), "employment-to-population ratio" (100, a statistic), "inflation-indexed" (38), "pre-recession" (23, a time reference). Exception: "maximum-employment" (82) still counts, as mandate language. Settings: `MATCH_HYPHENATED = False`, `HYPHENATED_EXCEPTIONS = ["maximum-employment"]`. Double hyphens ("inflation--which") are typed dashes, not compounds, and still count.
 
 Effect across 270 meetings: inflation 12,474 to 12,312 hits (minus 1.3 percent), employment 2,830 to 2,724 (minus 3.7 percent), recession 151 to 125 (minus 17.2 percent); uncertainty and tightening unchanged. This is a deliberate change in what the frequency series measures, so results from before this decision are not directly comparable.
+
+### 1.3 Hit records (2026-11-08)
+
+`output/hits.csv` has one row per keyword hit (17,153 across 270 meetings with the default keywords): meeting, keyword, exact matched text, character offsets, word span, words actually taken left and right, overlap with the previous hit's window, the full scored context and its score. Per-meeting counts and average sentiment in `fomc_analysis.csv` are reproduced exactly from these rows (tested).
+
+What the records show about the 75-word window:
+- Overlap is the norm. 84 percent of hits share words with the previous hit's window, median 127 of 151 words. Dense passages are scored many times over, so they dominate a meeting's average.
+- The window picks up tone from neighbouring sentences. December 2020 "uncertainty" averaged +0.69. Four of its seven hits are genuinely positive ("reduced uncertainty following the U.S. election", "favorable news on COVID-19 vaccines"), but "Participants continued to see the uncertainty surrounding the economic outlook as elevated" also scored +0.876. Among the most positive "uncertainty" hits overall is "a major source of uncertainty in the outlook" (+0.986, September 2003).
+- Only 19 hits have a window cut short by the start or end of a document.
+
+These findings are the evidence for plan 1.6 (sentence-based scoring).
 
 ## Interpreting results with care
 

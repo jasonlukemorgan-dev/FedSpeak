@@ -8,8 +8,6 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 - (fix) Return NaN, not 0, for sentiment when a keyword has no mentions in a meeting. Use `_sentiment_n` to size markers or mask low-count points.
 - (fix) Make the rolling window and its label consistent. Eight meetings a year means four meetings is about six months.
-- (fix) Remove the hardcoded `"uncertainty"` in the run block. Loop over `KEYWORDS` or accept a parameter.
-- (fix) Store each snippet's score with the snippet instead of re-scoring truncated text.
 
 ## 2. Analytical quality
 
@@ -21,7 +19,6 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 ## 3. Performance
 
-- Write outputs to an `output/` folder.
 
 ## 4. Usability
 
