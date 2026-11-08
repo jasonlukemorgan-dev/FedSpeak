@@ -15,8 +15,16 @@ FedSpeak/
   pyproject.toml       dependencies (managed by uv)
   uv.lock              exact resolved versions, committed
   .python-version      pinned Python version (3.12)
-  src/
-    fedspeak.py        single-file pipeline (extract, count, score, plot, summarize)
+  src/fedspeak/
+    config.py          run settings (path, keywords, window, output names)
+    extract.py         date from filename, text from PDF
+    match.py           keyword frequency
+    sentiment.py       VADER score around each keyword hit
+    pipeline.py        walks the PDF folder and runs the steps per meeting
+    dashboard.py       Plotly dashboard
+    report.py          console summary and snippet inspection
+    cli.py             entry point (`fedspeak`, `python -m fedspeak`)
+  tests/               pytest suite
   docs/
     context.md         background, decisions, known issues
     changelog.md       what changed and why
@@ -24,7 +32,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 0 (environment, package layout, downloader) of `docs/plan.md`, then section 1 (data verification). The package restructure in section 0.2 is approved; the layout above will change to match it.
+Current focus: section 0 of `docs/plan.md`. Environment (0.1) and package layout (0.2) are done; next is the downloader, then section 1 (data verification). Add new modules (`fetch.py`, `metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 
@@ -34,18 +42,18 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 - Input: folder of FOMC minutes PDFs, currently `D:\FOMC_Minutes`, searched recursively with `os.walk`. That folder lived on an external drive that is not available; the downloader in `docs/plan.md` section 0 replaces it.
 - Filenames contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD` (for example `fomcminutes20230201.pdf`). The date parser depends on this.
 - Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
-- Run: `uv run python src/fedspeak.py`. Tests: `uv run pytest`.
+- Run: `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest`.
 - Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, console summary.
 
-## Pipeline (all in `src/fedspeak.py`)
+## Pipeline (`src/fedspeak/`)
 
-1. `process_pdfs` walks the folder, parses dates, calls the steps below per file.
-2. `extract_text_from_pdf` uses pdfplumber.
-3. `count_keywords` returns frequency per 1,000 words plus raw counts.
-4. `keyword_sentiment` takes a 75-word window on each side of every keyword hit, scores it with VADER, and averages per keyword per meeting.
-5. `build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
-6. `print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
-7. `export_snippets` prints the most sentiment-charged snippets for one keyword as a sanity check.
+1. `pipeline.process_pdfs` walks the folder, parses dates, calls the steps below per file.
+2. `extract.extract_text_from_pdf` uses pdfplumber.
+3. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
+4. `sentiment.keyword_sentiment` takes a 75-word window on each side of every keyword hit, scores it with VADER, and averages per keyword per meeting.
+5. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
+6. `report.print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
+7. `report.export_snippets` prints the most sentiment-charged snippets for one keyword as a sanity check.
 
 ## Current dashboard settings (do not revert without asking)
 

@@ -21,7 +21,7 @@ uv sync
 
 This creates a local `.venv` with the pinned Python version (3.12) and the exact package versions in `uv.lock`.
 
-Edit the configuration block at the top of `src/fedspeak.py`:
+Edit the settings in `src/fedspeak/config.py`:
 
 ```python
 PDF_DIR = "D:\\FOMC_Minutes"
@@ -34,7 +34,7 @@ PDF filenames must contain the meeting date as `YYYYMMDD` or `YYYY-MM-DD`. Subfo
 ## Run
 
 ```
-uv run python src/fedspeak.py
+uv run fedspeak
 ```
 
 Run tests with `uv run pytest`.

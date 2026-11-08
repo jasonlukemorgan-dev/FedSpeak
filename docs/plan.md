@@ -38,6 +38,8 @@ config.toml     keywords, window, date range, paths
 tests/
 ```
 
+Status: done for the existing code, which now lives in `config.py`, `extract.py`, `match.py`, `sentiment.py`, `pipeline.py` (folder walk and per-meeting loop), `dashboard.py`, `report.py` (summary and snippets) and `cli.py`. Settings stay in `config.py` until `config.toml` and command line options arrive with the CLI work. `fetch.py`, `metrics.py` and `dots.py` are added when their work starts.
+
 Paths are handled with `pathlib` and read from config, so nothing is tied to one machine or drive letter.
 
 ### 0.3 Data storage

@@ -8,6 +8,10 @@ Newest first.
 - Dependencies now resolve to pandas 3.1 and plotly 7.1. A smoke test on synthetic text confirmed counting, sentiment, dashboard, summary and date parsing run unchanged with no warnings.
 - Removed unused `import nltk` (known issue 7). nltk was never in the requirements, so the import would fail in a clean environment.
 - pytest added as a development dependency.
+- `src/fedspeak.py` split into the `src/fedspeak/` package: `config`, `extract`, `match`, `sentiment`, `pipeline`, `dashboard`, `report`, `cli`. Code moved without changes to behavior. The only edit is that the dashboard filename now comes from `config.DASHBOARD_HTML` instead of being written inline.
+- Equivalence check: the old script and the new package were run on the same synthetic meetings (three dated, one undated, nested subfolders). The data table, every snippet, the full console output, date parsing and the dashboard file size were identical.
+- New entry points: `uv run fedspeak` and `python -m fedspeak`.
+- First tests in `tests/test_basics.py`: date parsing, frequency per 1,000 words, case and partial-word matching, empty text.
 
 ## Version 5: Layout spacing
 
