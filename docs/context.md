@@ -97,6 +97,30 @@ What the records show about the 75-word window:
 
 These findings are the evidence for plan 1.6 (sentence-based scoring).
 
+### 1.4 Zero mentions (2026-11-08)
+
+Sentiment is now NaN when a keyword is not mentioned. With the default keywords this removed fake 0.000 "neutral" scores from 191 of 270 meetings for "recession", 59 for "tightening" and 13 for "uncertainty".
+
+### 1.6 Window vs sentence context (2026-11-08)
+
+`fedspeak verify context` scores all 17,153 hits three ways. Results in `output/verify/context_modes.csv`.
+
+| | 75-word window | Sentence | Sentence plus one each side |
+|---|---|---|---|
+| Median words scored | 151 | 32 | 91 |
+| Hits overlapping previous context | 84% | 27% (same sentence only) | 72% |
+| Tone positive / neutral / negative | 72% / 2% / 26% | 47% / 20% / 33% | 66% / 4% / 30% |
+| Scores at or beyond plus or minus 0.9 | 22% | 1% | 9% |
+| Same tone label as window | | 55% | 80% |
+
+Per-meeting averages correlate with the window at 0.48 to 0.72 (sentence) and 0.81 to 0.92 (sentence plus one), by keyword.
+
+Reading: VADER's compound score saturates on long passages, so the window labels almost nothing neutral and pushes a fifth of hits to the extremes. Sentence scoring fixes the clearest failures: "Participants continued to see the uncertainty surrounding the economic outlook as elevated" moves from +0.876 to -0.340; three separate "major source of uncertainty in the outlook" sentences move to -0.19, -0.67 and -0.73 (window: +0.99, -0.97, +0.91). Sentence scoring still inherits VADER's general vocabulary, for example "inflation ... still were low" reads negative because "low" is a negative word in general English (known issue: finance lexicon).
+
+The sentence splitter (`sentiment.sentence_spans`) handles titles, initials, "U.S.", "a.m." and similar; 61,612 sentences, median 26 words. A few attendance lists and tables form very long sentences (up to 1,039 words); keyword hits there are rare.
+
+Decision pending: default `CONTEXT_MODE` stays "window" until the audit (plan 1.5) is labelled. Recommendation: "sentence".
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.

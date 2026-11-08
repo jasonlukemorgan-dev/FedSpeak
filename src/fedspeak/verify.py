@@ -75,6 +75,71 @@ def compare_sources(keywords=KEYWORDS, manifest_path=MANIFEST_CSV, out_dir=VERIF
     return df
 
 
+CONTEXT_VARIANTS = {
+    "window75": dict(mode="window", window=75),
+    "sentence": dict(mode="sentence", neighbors=0),
+    "sentence_pm1": dict(mode="sentence", neighbors=1),
+}
+
+
+def _tone(score):
+    return "negative" if score < -0.05 else "positive" if score > 0.05 else "neutral"
+
+
+def compare_context_modes(keywords=KEYWORDS, text_dir=None, out_dir=VERIFY_DIR, variants=CONTEXT_VARIANTS):
+    """Score every hit in the corpus under each context variant (plan 1.6).
+
+    Writes output/verify/context_modes.csv: one row per hit with each variant's
+    context length, overlap with the previous context, and score.
+    """
+    from fedspeak.config import TEXT_DIR
+    from fedspeak.match import find_hits
+    from fedspeak.sentiment import score_hits
+
+    rows = []
+    for path in tqdm(sorted(Path(text_dir or TEXT_DIR).glob("*.txt")), desc="Scoring context variants"):
+        text = path.read_text(encoding="utf-8")
+        hits = find_hits(text, keywords)
+        per_variant = {name: score_hits(text, hits, **kw) for name, kw in variants.items()}
+        for i, base in enumerate(per_variant[next(iter(variants))]):
+            row = {"date": path.stem[-8:], "keyword": base["keyword"], "char_start": base["char_start"]}
+            for name, recs in per_variant.items():
+                r = recs[i]
+                row[f"{name}_words"] = len(r["context"].split())
+                row[f"{name}_overlap"] = r["window_overlap_words"]
+                row[f"{name}_score"] = r["score"]
+                row[f"{name}_context"] = r["context"]
+            rows.append(row)
+    df = pd.DataFrame(rows)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    df.drop(columns=[c for c in df.columns if c.endswith("_context")]).to_csv(
+        Path(out_dir) / "context_modes.csv", index=False)
+    return df
+
+
+def print_context_summary(df, keywords=KEYWORDS, variants=CONTEXT_VARIANTS):
+    names = list(variants)
+    print(f"\nHits scored: {len(df)}")
+    print(f"{'variant':<14} {'median words':>12} {'overlap prev':>13} {'median overlap':>15} "
+          f"{'positive':>9} {'neutral':>8} {'negative':>9}")
+    for n in names:
+        tones = df[f"{n}_score"].map(_tone).value_counts(normalize=True)
+        ov = df[f"{n}_overlap"]
+        print(f"{n:<14} {df[f'{n}_words'].median():>12.0f} {(ov > 0).mean():>13.0%} "
+              f"{ov[ov > 0].median() if (ov > 0).any() else 0:>15.0f} "
+              f"{tones.get('positive', 0):>9.0%} {tones.get('neutral', 0):>8.0%} {tones.get('negative', 0):>9.0%}")
+    base = names[0]
+    for n in names[1:]:
+        same = (df[f"{base}_score"].map(_tone) == df[f"{n}_score"].map(_tone)).mean()
+        print(f"Same tone label, {base} vs {n}: {same:.0%} of hits")
+    print("\nPer-meeting average sentiment, correlation with window75:")
+    meet = df.groupby(["date", "keyword"])[[f"{n}_score" for n in names]].mean().reset_index()
+    for kw in keywords:
+        m = meet[meet.keyword == kw]
+        cors = "  ".join(f"{n} {m[f'{base}_score'].corr(m[f'{n}_score']):.2f}" for n in names[1:])
+        print(f"  {kw:<14} {cors}   (meetings: {len(m)})")
+
+
 def print_comparison_summary(df, keywords=KEYWORDS):
     print(f"\nMeetings compared: {len(df)}")
     print(f"Word count ratio PDF/HTML: median {df.word_ratio_pdf_to_html.median():.3f}, "

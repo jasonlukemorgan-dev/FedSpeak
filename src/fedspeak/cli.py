@@ -6,7 +6,9 @@
                            download minutes and write their cleaned text to data/text
   fedspeak extract [--force]
                            rebuild data/text from the downloaded HTML
-  fedspeak verify          compare PDF and HTML text for every meeting that has both
+  fedspeak verify [sources|context]
+                           sources: compare PDF and HTML text for every meeting that has both
+                           context: score every hit with a word window and with sentences
 """
 
 import argparse
@@ -60,7 +62,9 @@ def main(argv=None):
     fetch.add_argument("--force", action="store_true", help="download and extract again even if files exist")
     ext = sub.add_parser("extract", help="rebuild data/text from the downloaded HTML")
     ext.add_argument("--force", action="store_true", help="overwrite existing text files")
-    sub.add_parser("verify", help="compare PDF and HTML text; writes output/verify/pdf_vs_html.csv")
+    ver = sub.add_parser("verify", help="verification checks; results in output/verify/")
+    ver.add_argument("check", nargs="?", default="sources", choices=["sources", "context"],
+                     help="sources: PDF vs HTML text (default); context: window vs sentence scoring")
     args = parser.parse_args(argv)
 
     if args.command == "fetch":
@@ -69,6 +73,10 @@ def main(argv=None):
         extract(force=args.force, dates={r.meeting_date for r in records})
     elif args.command == "extract":
         extract(force=args.force)
+    elif args.command == "verify" and args.check == "context":
+        from fedspeak.verify import VERIFY_DIR, compare_context_modes, print_context_summary
+        print_context_summary(compare_context_modes())
+        print(f"\nDetails: {VERIFY_DIR / 'context_modes.csv'}")
     elif args.command == "verify":
         from fedspeak.verify import VERIFY_DIR, compare_sources, print_comparison_summary
         print_comparison_summary(compare_sources())

@@ -18,7 +18,9 @@ START_DATE = None         # "YYYY-MM-DD" to limit the analysis, None for no lowe
 END_DATE = None           # "YYYY-MM-DD", None for no upper limit
 MATCH_HYPHENATED = False  # count keywords inside hyphenated compounds ("pre-recession", "Inflation-Protected")?
 HYPHENATED_EXCEPTIONS = ["maximum-employment"]   # compounds that still count (mandate language)
+CONTEXT_MODE = "window"   # "window" (CONTEXT_WINDOW words each side) or "sentence"
 CONTEXT_WINDOW = 75       # words on each side of keyword to extract for sentiment
+SENTENCE_NEIGHBORS = 0    # sentence mode: extra sentences on each side of the hit's sentence
 
 # --- Outputs (git-ignored) ---
 OUTPUT_DIR = PROJECT_ROOT / "output"
