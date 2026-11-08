@@ -31,6 +31,8 @@ This downloads every set of FOMC minutes from 1993 onward from federalreserve.go
 
 The cleaned text is already in the repository, so the analysis runs without downloading anything. Text comes from the HTML version of the minutes: the PDFs for 2008 to 2024 use a two-column layout that PDF extraction splices together, and PDFs before 2020 include the Summary of Economic Projections. Details in `docs/context.md`.
 
+Optional: for Loughran-McDonald finance-dictionary measures, download the Master Dictionary CSV from https://sraf.nd.edu/loughranmcdonald-master-dictionary/ and save it as `data/lexicon/external/Loughran-McDonald_MasterDictionary_1993-2025.csv`. It is free for academic research; commercial use needs a license from its authors. It is not included in this repository. Without it, the LM columns are left out.
+
 Choose what to analyze in `src/fedspeak/config.py`:
 
 ```python

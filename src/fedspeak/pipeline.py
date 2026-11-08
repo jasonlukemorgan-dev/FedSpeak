@@ -5,17 +5,21 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
+from fedspeak.config import LM_DICTIONARY
 from fedspeak.extract import extract_date_from_filename
+from fedspeak.lm import DOWNLOAD_HINT, document_measures, load_lm
 from fedspeak.match import count_keywords, find_hits
 from fedspeak.sentiment import keyword_sentiment
 
 HIT_COLUMNS = [
     "date", "meeting_type", "filename", "keyword", "matched", "char_start", "char_end",
-    "word_start", "word_end", "words_left", "words_right", "window_overlap_words", "score", "context",
+    "word_start", "word_end", "words_left", "words_right", "window_overlap_words", "score",
+    "lm_positive", "lm_negative", "lm_uncertainty", "lm_tone", "context",
 ]
 
 
-def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest_path=None):
+def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest_path=None,
+                    lm_path=LM_DICTIONARY):
     """Process every meeting's text file in text_dir, optionally limited to meetings
     between start_date and end_date (inclusive, "YYYY-MM-DD" or None).
 
@@ -50,12 +54,15 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
         return pd.DataFrame(), pd.DataFrame(columns=HIT_COLUMNS)
 
     print(f"Analyzing {len(selected)} meetings ({selected[0][0].date()} to {selected[-1][0].date()})\n")
+    lm = load_lm(lm_path) if lm_path else None
+    if lm is None:
+        print(DOWNLOAD_HINT.format(path=lm_path) + "\n")
 
     for date, path in tqdm(selected, desc="Analyzing minutes"):
         text = path.read_text(encoding="utf-8")
         hits = find_hits(text, keywords)
         freq = count_keywords(text, keywords, hits=hits)
-        sentiments, records = keyword_sentiment(text, keywords, hits=hits)
+        sentiments, records = keyword_sentiment(text, keywords, hits=hits, lm_path=lm_path if lm else None)
         for kw in keywords:
             # Frequency and sentiment must describe the same hits (plan 1.2).
             if freq[f"{kw}_raw"] != sentiments[f"{kw}_sentiment_n"]:
@@ -63,10 +70,12 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
                                    f"but {sentiments[f'{kw}_sentiment_n']} sentiment hits")
 
         hit_rows += [{"date": date, "filename": path.name, **r} for r in records]
-        results.append({"date": date, "filename": path.name, **freq, **sentiments})
+        doc = document_measures(text, lm) if lm else {}
+        results.append({"date": date, "filename": path.name, **freq, **sentiments, **doc})
 
     df = pd.DataFrame(results).sort_values("date").reset_index(drop=True)
-    hits_df = pd.DataFrame(hit_rows, columns=[c for c in HIT_COLUMNS if c != "meeting_type"])
+    hit_cols = [c for c in HIT_COLUMNS if c != "meeting_type" and (lm or not c.startswith("lm_"))]
+    hits_df = pd.DataFrame(hit_rows, columns=hit_cols)
 
     if manifest_path and Path(manifest_path).exists():
         manifest = pd.read_csv(manifest_path, dtype=str).fillna("")
@@ -79,4 +88,4 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
     else:
         hits_df["meeting_type"] = ""
 
-    return df, hits_df[HIT_COLUMNS]
+    return df, hits_df[[c for c in HIT_COLUMNS if c in hits_df.columns]]

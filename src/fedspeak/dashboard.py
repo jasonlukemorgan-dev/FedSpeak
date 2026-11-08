@@ -3,10 +3,20 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from fedspeak.config import DASHBOARD_HTML
+from fedspeak.config import DASHBOARD_HTML, DASHBOARD_SENTIMENT
+
+MEASURES = {
+    "vader": ("_sentiment", "VADER with Fed vocabulary"),
+    "lm": ("_lm_tone", "Loughran-McDonald net tone"),
+}
 
 
-def build_dashboard(df, keywords):
+def build_dashboard(df, keywords, measure=DASHBOARD_SENTIMENT):
+    if measure not in MEASURES:
+        raise ValueError(f"DASHBOARD_SENTIMENT must be one of {list(MEASURES)}, not {measure!r}")
+    suffix, measure_label = MEASURES[measure]
+    if f"{keywords[0]}{suffix}" not in df.columns:
+        raise ValueError(f"No {measure_label} columns in the results; is the dictionary installed?")
     colors = [
         "#E63946", "#457B9D", "#2A9D8F", "#E9C46A", "#F4A261",
         "#A8DADC", "#6A4C93", "#1D3557"
@@ -15,7 +25,7 @@ def build_dashboard(df, keywords):
     # Add 4-period rolling averages
     for kw in keywords:
         df[f"{kw}_roll"] = df[kw].rolling(4, min_periods=1).mean()
-        df[f"{kw}_sentiment_roll"] = df[f"{kw}_sentiment"].rolling(4, min_periods=1).mean()
+        df[f"{kw}{suffix}_roll"] = df[f"{kw}{suffix}"].rolling(4, min_periods=1).mean()
 
     fig = make_subplots(
         rows=3, cols=1,
@@ -23,7 +33,7 @@ def build_dashboard(df, keywords):
         vertical_spacing=0.12,   # increased from 0.06 so year labels do not overlap subplot titles
         subplot_titles=(
             "📈 Keyword Frequency (per 1,000 words)",
-            "🎭 Sentiment Around Keywords (VADER compound score, -1 to +1)",
+            f"🎭 Sentiment of Keyword Sentences ({measure_label}, -1 to +1)",
             "🔗 Frequency vs. Sentiment Scatter (select keyword from legend)"
         ),
         row_heights=[0.38, 0.38, 0.24]
@@ -57,7 +67,7 @@ def build_dashboard(df, keywords):
 
         # --- Row 2: Sentiment ---
         fig.add_trace(go.Scatter(
-            x=df["date"], y=df[f"{kw}_sentiment"],
+            x=df["date"], y=df[f"{kw}{suffix}"],
             mode="lines+markers",
             name=kw,
             line=dict(color=color, width=1.5, dash="dot"),
@@ -69,7 +79,7 @@ def build_dashboard(df, keywords):
         ), row=2, col=1)
 
         fig.add_trace(go.Scatter(
-            x=df["date"], y=df[f"{kw}_sentiment_roll"],
+            x=df["date"], y=df[f"{kw}{suffix}_roll"],
             mode="lines",
             name=f"{kw} sentiment (4-mtg avg)",
             line=dict(color=color, width=2.5),
@@ -80,7 +90,7 @@ def build_dashboard(df, keywords):
 
         # --- Row 3: Scatter freq vs sentiment ---
         fig.add_trace(go.Scatter(
-            x=df[kw], y=df[f"{kw}_sentiment"],
+            x=df[kw], y=df[f"{kw}{suffix}"],
             mode="markers",
             name=kw,
             marker=dict(

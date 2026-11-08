@@ -152,6 +152,19 @@ Effect on all hits (sentence mode; mean score, then positive / neutral / negativ
 
 Limits a word list cannot fix: "How soon the gloom ... would dissipate was subject to substantial uncertainty" still scores +0.92 (from "pickup", "profits"); "a major source of uncertainty ... the strength of such investment" scores +0.23 once the keyword is excluded. The Statement on Longer-Run Goals, repeated in minutes since 2012, contributes the same boilerplate sentences each year. Loughran-McDonald (a finance dictionary) is free for academic research but needs a license for commercial use (sraf.nd.edu, checked 2026-11-08) and is not included.
 
+### Loughran-McDonald measures (2026-11-08)
+
+Added as a second, standard measure alongside Fed-adjusted VADER. Word lists are used unmodified so results stay comparable with the finance literature. Terms (sraf.nd.edu): free for academic research, commercial use needs a license; the user's work is non-commercial for now. The file is not committed (redistribution is not addressed); it sits in `data/lexicon/external/` and the pipeline runs without it.
+
+Per hit: LM positive, negative and uncertainty word counts in the hit's sentence (keyword excluded) and net tone (positive - negative) / (positive + negative). Per meeting: `<kw>_lm_tone`, `<kw>_lm_uncertainty`, and whole-document rates per 1,000 words (`doc_lm_positive`, `doc_lm_negative`, `doc_lm_uncertainty`, `doc_lm_tone`).
+
+How LM reads Fed vocabulary: it already treats "crude", "low", "increase", "growth" and "inflation" as neutral, but it was built from corporate filings, so it marks "easing" and "tightening" negative and lacks "elevated", "headwinds" and "anchored".
+
+First results:
+- Per hit, LM and Fed-adjusted VADER correlate at 0.48 and give the same tone label 54 percent of the time; 46 percent of hit sentences contain no LM tone words. Per meeting, correlation by keyword is 0.42 to 0.63. They measure different things and should be read side by side, not averaged.
+- Whole-document LM tone is most negative in 2001 (-0.48), 2007 (-0.40) and 2008 (-0.62); negative words peak at 30.2 per 1,000 in 2001 and 27.7 in 2008. This matches the recessions and is a basic validity check.
+- LM uncertainty peaks in 2007 (20.1 per 1,000) but is lowest in 2020 to 2023 (about 14). The uncertainty list includes hedging words ("may", "could", "depend"), so it tracks drafting style as well as uncertainty. Treat it with caution and read the text behind any movement.
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.

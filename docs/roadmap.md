@@ -10,7 +10,6 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 ## 2. Analytical quality
 
-- Loughran-McDonald finance dictionary as a comparison measure. Needs a commercial license for non-academic use; if adopted, have users download it rather than committing it.
 - Learned model of Fed tone or stance, trained on labelled sentences (see `docs/context.md` once scoped).
 - Compare VADER against a finance-specific model such as FinBERT on a sample of snippets to check agreement.
 - Configurable event shading: list of (label, start, end) for COVID, 2022 inflation surge, hiking cycles, taper tantrum.

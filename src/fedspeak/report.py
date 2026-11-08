@@ -50,7 +50,12 @@ The faint red shading marks the COVID recession (Feb-Apr 2020).
             print(f"  {kw:<15} freq: {freq:.2f}/1k words   sentiment: none (not mentioned)")
             continue
         tone = "negative" if sent < -0.05 else "positive" if sent > 0.05 else "neutral"
-        print(f"  {kw:<15} freq: {freq:.2f}/1k words   sentiment: {sent:+.3f} ({tone})")
+        lm = f"   LM tone: {latest[f'{kw}_lm_tone']:+.3f}" if f"{kw}_lm_tone" in latest.index else ""
+        print(f"  {kw:<15} freq: {freq:.2f}/1k words   sentiment: {sent:+.3f} ({tone}){lm}")
+    if "doc_lm_uncertainty" in latest.index:
+        print(f"\n  Whole document (Loughran-McDonald): uncertainty {latest['doc_lm_uncertainty']:.1f}, "
+              f"negative {latest['doc_lm_negative']:.1f}, positive {latest['doc_lm_positive']:.1f} "
+              f"words per 1,000; net tone {latest['doc_lm_tone']:+.3f}")
     print()
 
 

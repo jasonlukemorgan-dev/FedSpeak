@@ -1,5 +1,8 @@
 # Downloaded source documents (re-downloadable with `fedspeak fetch`)
 data/raw/
+
+# Third-party word lists with their own terms (see src/fedspeak/lm.py)
+data/lexicon/external/
 *.part
 
 # Generated outputs

@@ -23,6 +23,8 @@ CONTEXT_WINDOW = 75       # window mode: words on each side of keyword to extrac
 SENTENCE_NEIGHBORS = 0    # sentence mode: extra sentences on each side of the hit's sentence
 FED_LEXICON = DATA_DIR / "lexicon" / "fed_vader_overrides.csv"  # Fed adjustments to VADER's words; None for plain VADER
 EXCLUDE_KEYWORD_FROM_SCORE = True  # the keyword's own words do not score its sentence ("recession" is not counted as negative)
+LM_DICTIONARY = DATA_DIR / "lexicon" / "external" / "Loughran-McDonald_MasterDictionary_1993-2025.csv"  # optional, not committed
+DASHBOARD_SENTIMENT = "vader"      # sentiment shown on the dashboard: "vader" (Fed-adjusted) or "lm" (Loughran-McDonald net tone)
 
 # --- Outputs (git-ignored) ---
 OUTPUT_DIR = PROJECT_ROOT / "output"

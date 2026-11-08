@@ -21,8 +21,9 @@ from bisect import bisect_right
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from fedspeak.config import (
-    CONTEXT_MODE, CONTEXT_WINDOW, EXCLUDE_KEYWORD_FROM_SCORE, FED_LEXICON, SENTENCE_NEIGHBORS,
+    CONTEXT_MODE, CONTEXT_WINDOW, EXCLUDE_KEYWORD_FROM_SCORE, FED_LEXICON, LM_DICTIONARY, SENTENCE_NEIGHBORS,
 )
+from fedspeak.lm import hit_measures, load_lm
 from fedspeak.match import find_hits
 
 # Tokens ending in "." that do not end a sentence in the minutes. Single capital
@@ -96,7 +97,7 @@ def get_analyzer(lexicon_path=FED_LEXICON, exclude_words=()):
 
 
 def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=SENTENCE_NEIGHBORS,
-               lexicon_path=FED_LEXICON, exclude_keyword=EXCLUDE_KEYWORD_FROM_SCORE):
+               lexicon_path=FED_LEXICON, exclude_keyword=EXCLUDE_KEYWORD_FROM_SCORE, lm_path=LM_DICTIONARY):
     """One record per hit, in document order.
 
     mode "window": `window` words before the first matched word and after the last
@@ -110,7 +111,10 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
     With `exclude_keyword`, the hit's own keyword words carry no tone, so a sentence
     about "recession" is not negative merely because it says "recession"; other
     keywords in the sentence still count.
+    When the Loughran-McDonald dictionary is available (`lm_path`), each record also
+    gets lm_positive, lm_negative, lm_uncertainty and lm_tone for the same context.
     """
+    lm = load_lm(lm_path) if lm_path else None
     if mode not in ("window", "sentence"):
         raise ValueError(f"CONTEXT_MODE must be 'window' or 'sentence', not {mode!r}")
     words = text.split()
@@ -141,6 +145,7 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
             "words_right": w_end - 1 - hit.word_end,
             "window_overlap_words": max(0, prev_end - w_start) if prev_end is not None else 0,
             "score": analyzer.polarity_scores(context)["compound"],
+            **(hit_measures(context, hit.keyword, lm, exclude_keyword) if lm else {}),
             "context": context,
         })
         prev_end = w_end if prev_end is None else max(prev_end, w_end)
@@ -148,7 +153,7 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
 
 
 def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None, mode=CONTEXT_MODE,
-                      neighbors=SENTENCE_NEIGHBORS):
+                      neighbors=SENTENCE_NEIGHBORS, lm_path=LM_DICTIONARY):
     """Average VADER score per keyword over its hits.
 
     Returns ({"<kw>_sentiment": avg or NaN if no hits, "<kw>_sentiment_n": hits}, records), where
@@ -157,7 +162,7 @@ def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None, mode=CON
     """
     if hits is None:
         hits = find_hits(text, keywords)
-    records = score_hits(text, hits, window, mode=mode, neighbors=neighbors)
+    records = score_hits(text, hits, window, mode=mode, neighbors=neighbors, lm_path=lm_path)
 
     avg_sentiments = {}
     for kw in keywords:
@@ -165,5 +170,11 @@ def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None, mode=CON
         # No mentions means no tone to measure: NaN, not 0, which would read as neutral.
         avg_sentiments[f"{kw}_sentiment"] = sum(scores) / len(scores) if scores else float("nan")
         avg_sentiments[f"{kw}_sentiment_n"] = len(scores)
+        kw_records = [r for r in records if r["keyword"] == kw]
+        if records and "lm_tone" in records[0]:
+            avg_sentiments[f"{kw}_lm_tone"] = (sum(r["lm_tone"] for r in kw_records) / len(kw_records)
+                                               if kw_records else float("nan"))
+            avg_sentiments[f"{kw}_lm_uncertainty"] = (sum(r["lm_uncertainty"] for r in kw_records) / len(kw_records)
+                                                      if kw_records else float("nan"))
 
     return avg_sentiments, records

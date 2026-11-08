@@ -22,7 +22,8 @@ FedSpeak/
     verify.py          verification checks (`fedspeak verify sources|context`)
     audit.py           human audit page and label scoring (`fedspeak audit`)
     match.py           find_hits (the one keyword matcher) and frequency
-    sentiment.py       VADER score around each keyword hit
+    sentiment.py       sentence splitting and VADER score for each keyword hit
+    lm.py              Loughran-McDonald measures per hit and per document (optional dictionary)
     pipeline.py        reads data/text and runs counting and sentiment per meeting
     dashboard.py       Plotly dashboard
     report.py          console summary and snippet inspection
@@ -31,6 +32,7 @@ FedSpeak/
   data/
     manifest.csv       one row per meeting: dates, type, URLs, checksums (committed)
     lexicon/           fed_vader_overrides.csv: Fed adjustments to VADER, one reason per word (committed)
+      external/        Loughran-McDonald Master Dictionary CSV (git-ignored: third-party terms, never commit)
     text/              cleaned minutes text from HTML, one file per meeting (committed)
     raw/minutes/       html/ and pdf/ downloads (git-ignored, rebuilt by `fedspeak fetch`)
   docs/
@@ -84,5 +86,5 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 See `docs/context.md` for detail. Short list:
 
 1. Recession shading is hardcoded to COVID only.
-2. VADER plus the Fed word list (`data/lexicon/fed_vader_overrides.csv`) still cannot read some sentence constructions. Loughran-McDonald needs a commercial license and is not included. Changes to the word list need a reason per row and a before/after note in `docs/context.md`.
+2. VADER plus the Fed word list (`data/lexicon/fed_vader_overrides.csv`) still cannot read some sentence constructions. Changes to the word list need a reason per row and a before/after note in `docs/context.md`. Loughran-McDonald is used unmodified, free for academic use only; the user's work is non-commercial for now. Recheck its terms if that changes.
 3. Sentence scoring has not been confirmed by a human audit yet (`fedspeak audit`).
