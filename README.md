@@ -52,3 +52,4 @@ Sentiment describes the tone of the surrounding language, not a forecast. Treat 
 - `docs/context.md`: background, design decisions, known issues
 - `docs/changelog.md`: history of changes
 - `docs/roadmap.md`: planned work
+- `docs/plan.md`: detailed plan for verification, additional metrics and dot plot analysis

@@ -2,6 +2,8 @@
 
 Ordered by value for effort. Items marked (fix) correct existing behavior.
 
+See `docs/plan.md` for the detailed plan covering data verification, additional metrics and dot plot quantification. Verification work there comes before the items below.
+
 ## 1. Correctness fixes
 
 - (fix) Return NaN, not 0, for sentiment when a keyword has no mentions in a meeting. Use `_sentiment_n` to size markers or mask low-count points.
