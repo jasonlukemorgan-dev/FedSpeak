@@ -8,14 +8,21 @@ Two ways to choose the context (config CONTEXT_MODE):
 - "window":   CONTEXT_WINDOW words on each side of the hit.
 - "sentence": the sentence containing the hit, plus SENTENCE_NEIGHBORS sentences on
               each side. Keeps tone from unrelated sentences out of the score.
+
+Vocabulary: VADER's general-English lexicon, adjusted for Fed language by the
+reviewable word list at config FED_LEXICON (data/lexicon/fed_vader_overrides.csv).
 """
 
+import copy
+import csv
 import re
 from bisect import bisect_right
 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-from fedspeak.config import CONTEXT_MODE, CONTEXT_WINDOW, SENTENCE_NEIGHBORS
+from fedspeak.config import (
+    CONTEXT_MODE, CONTEXT_WINDOW, EXCLUDE_KEYWORD_FROM_SCORE, FED_LEXICON, SENTENCE_NEIGHBORS,
+)
 from fedspeak.match import find_hits
 
 # Tokens ending in "." that do not end a sentence in the minutes. Single capital
@@ -50,17 +57,46 @@ def sentence_spans(words):
         spans.append((start, len(words)))
     return spans
 
-_ANALYZER = None
+_BASE_ANALYZER = None
+_ANALYZERS = {}
 
 
-def _analyzer():
-    global _ANALYZER
-    if _ANALYZER is None:
-        _ANALYZER = SentimentIntensityAnalyzer()
-    return _ANALYZER
+def load_lexicon_overrides(path):
+    """{word: valence} from a Fed lexicon CSV (columns: word, valence, ...)."""
+    with open(path, newline="", encoding="utf-8") as f:
+        return {row["word"].strip().lower(): float(row["valence"]) for row in csv.DictReader(f)}
 
 
-def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=SENTENCE_NEIGHBORS):
+def get_analyzer(lexicon_path=FED_LEXICON, exclude_words=()):
+    """A VADER analyzer with Fed lexicon overrides applied and some words removed.
+
+    Overrides with valence 0 remove the word from VADER's lexicon (it no longer
+    carries tone); other overrides set or add the word's valence. `exclude_words`
+    are removed as well, which is how a keyword is kept from scoring its own
+    sentence. Analyzers are cached per combination.
+    """
+    global _BASE_ANALYZER
+    key = (str(lexicon_path) if lexicon_path else None, frozenset(w.lower() for w in exclude_words))
+    if key not in _ANALYZERS:
+        if _BASE_ANALYZER is None:
+            _BASE_ANALYZER = SentimentIntensityAnalyzer()
+        lexicon = dict(_BASE_ANALYZER.lexicon)
+        if lexicon_path:
+            for word, valence in load_lexicon_overrides(lexicon_path).items():
+                if valence == 0:
+                    lexicon.pop(word, None)
+                else:
+                    lexicon[word] = valence
+        for word in key[1]:
+            lexicon.pop(word, None)
+        analyzer = copy.copy(_BASE_ANALYZER)
+        analyzer.lexicon = lexicon
+        _ANALYZERS[key] = analyzer
+    return _ANALYZERS[key]
+
+
+def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=SENTENCE_NEIGHBORS,
+               lexicon_path=FED_LEXICON, exclude_keyword=EXCLUDE_KEYWORD_FROM_SCORE):
     """One record per hit, in document order.
 
     mode "window": `window` words before the first matched word and after the last
@@ -70,6 +106,10 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
     `words_left` and `words_right` record what was actually taken.
     `window_overlap_words` counts words shared with the previous hit's context (any
     keyword), since nearby hits score overlapping text.
+    Scoring uses VADER with the Fed lexicon at `lexicon_path` (None for plain VADER).
+    With `exclude_keyword`, the hit's own keyword words carry no tone, so a sentence
+    about "recession" is not negative merely because it says "recession"; other
+    keywords in the sentence still count.
     """
     if mode not in ("window", "sentence"):
         raise ValueError(f"CONTEXT_MODE must be 'window' or 'sentence', not {mode!r}")
@@ -77,7 +117,6 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
     if mode == "sentence":
         spans = sentence_spans(words)
         span_starts = [s for s, _ in spans]
-    analyzer = _analyzer()
     records = []
     prev_end = None
     for hit in sorted(hits, key=lambda h: (h.start, h.keyword)):
@@ -90,6 +129,7 @@ def score_hits(text, hits, window=CONTEXT_WINDOW, mode=CONTEXT_MODE, neighbors=S
             w_start = spans[max(0, first - neighbors)][0]
             w_end = spans[min(len(spans) - 1, last + neighbors)][1]
         context = " ".join(words[w_start:w_end])
+        analyzer = get_analyzer(lexicon_path, hit.keyword.split() if exclude_keyword else ())
         records.append({
             "keyword": hit.keyword,
             "matched": hit.matched,

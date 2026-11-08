@@ -30,6 +30,7 @@ FedSpeak/
   tests/               pytest suite
   data/
     manifest.csv       one row per meeting: dates, type, URLs, checksums (committed)
+    lexicon/           fed_vader_overrides.csv: Fed adjustments to VADER, one reason per word (committed)
     text/              cleaned minutes text from HTML, one file per meeting (committed)
     raw/minutes/       html/ and pdf/ downloads (git-ignored, rebuilt by `fedspeak fetch`)
   docs/
@@ -39,7 +40,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 to 1.6 are done; `CONTEXT_MODE` defaults to "sentence" (decided 2026-11-08 without audit labels; the audit page is an optional later check). Section 1 remaining: an audit labelling pass when the user wants one. Next candidates: finance lexicon (roadmap 2), then section 2 metrics. Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 to 1.6 are done; `CONTEXT_MODE` defaults to "sentence" (decided 2026-11-08 without audit labels; the audit page is an optional later check). Section 1 remaining: an audit labelling pass when the user wants one. Fed word list and keyword self-exclusion are in. Next candidates: section 2 metrics, or a learned model (discussed with the user, not started). Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs go in `output/` (git-ignored): `fomc_analysis.csv`, `hits.csv`, `fomc_dashboard.html`, `verify/`.
 
@@ -60,7 +61,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 2. `pipeline.process_minutes` reads `data/text/`, applies the date range, calls the steps below per meeting, and adds meeting type and release date from the manifest.
 3. `match.find_hits` finds every keyword hit once per meeting (rules in the module docstring; hyphenated compounds are excluded except those in `HYPHENATED_EXCEPTIONS`, a decision recorded in `docs/context.md`). Steps 4 and 5 both use these hits, and the pipeline raises an error if their counts ever differ.
 4. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
-5. `sentiment.score_hits` scores the sentence containing every hit with VADER once (or a 75-word window if `CONTEXT_MODE = "window"`) and returns a full record per hit; `keyword_sentiment` averages those scores per keyword per meeting.
+5. `sentiment.score_hits` scores the sentence containing every hit once with VADER adjusted by the Fed word list, ignoring the hit's own keyword (or a 75-word window if `CONTEXT_MODE = "window"`) and returns a full record per hit; `keyword_sentiment` averages those scores per keyword per meeting.
 6. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
 7. `report.print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
 8. `report.export_snippets` prints the most sentiment-charged snippets for each keyword (stored scores, `SNIPPETS_PER_KEYWORD` each) as a sanity check.
@@ -83,5 +84,5 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 See `docs/context.md` for detail. Short list:
 
 1. Recession shading is hardcoded to COVID only.
-2. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
+2. VADER plus the Fed word list (`data/lexicon/fed_vader_overrides.csv`) still cannot read some sentence constructions. Loughran-McDonald needs a commercial license and is not included. Changes to the word list need a reason per row and a before/after note in `docs/context.md`.
 3. Sentence scoring has not been confirmed by a human audit yet (`fedspeak audit`).

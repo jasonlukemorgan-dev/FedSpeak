@@ -45,7 +45,7 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 2. Recession shading covers only Feb to Apr 2020. Other episodes (2022 inflation surge, rate hike cycles) are not marked. Consider a configurable list of events.
 3. Fixed in version 6: sentiment is NaN when a keyword has no mentions, and the dashboard leaves gaps. Across 270 meetings this removed fake 0.000 "neutral" scores from 191 meetings for "recession", 59 for "tightening" and 13 for "uncertainty". The `_sentiment_n` column could still drive marker size or filtering.
 4. Fixed in version 6: the summary now describes the 4-meeting average as about six months.
-5. VADER is not a finance lexicon. Words like "tightening" and "inflation" carry specific meaning in this setting. Suggested overrides: tightening -0.5, accommodative +0.4, headwinds -0.6, resilient +0.5, applied through `analyzer.lexicon.update(...)`.
+5. Partly fixed in version 6: a Fed word list adjusts VADER (see Fed vocabulary for VADER above). "tightening" and "accommodative" were deliberately left unscored, since their tone depends on context. Sentence constructions a word list cannot read remain.
 6. Fixed in version 6: `match.find_hits` handles multi-word keywords, and frequency and sentiment share it.
 7. Fixed in version 6: unused `import nltk` removed.
 8. Fixed in version 6: each hit stores its full context and score; `export_snippets` uses the stored score.
@@ -124,6 +124,33 @@ Decision (2026-11-08): default `CONTEXT_MODE` is now "sentence", on the corpus e
 Effect on corpus averages (mean of per-meeting sentiment, window to sentence): uncertainty +0.27 to -0.16, recession +0.03 to -0.31, inflation +0.39 to +0.09, employment +0.41 to +0.20, tightening +0.43 to +0.13. Under the window, "uncertainty" and "recession" read as positive or neutral on average, which the text does not support. Results from before this change are not comparable.
 
 Remaining weakness: VADER's general vocabulary. "Subject to substantial uncertainty" scored +0.96 because the same sentence contains "dissipate" and "increasing"; "inflation ... still were low" reads negative. Next step on the roadmap: a Fed-specific lexicon or Loughran-McDonald comparison.
+
+### Fed vocabulary for VADER (2026-11-08)
+
+Method: counted every VADER lexicon word in the 17,153 keyword sentences and ranked by total pull (count times valence). The top of that list showed systematic misreadings, which `data/lexicon/fed_vader_overrides.csv` corrects. Each row has the new valence, VADER's original, a category and a reason.
+
+- Finance nouns VADER treats as emotion are set to no tone: interest (+2.0, "interest rates"), energy, crude (-2.7, "crude oil"), credit, securities, asset(s), treasury, united ("United States").
+- Topic and procedural words: growth (+1.6; "growth slowed" is not positive, the modifier carries tone), demand, agreed, commitment, lags, well.
+- Direction words whose tone depends on the subject: increase(d), low, lower, lowest. VADER was inconsistent here: "increase" +1.3 but "rise" and "decline" unscored, so "inflation increased" read positive and "inflation rose" neutral.
+- Fed terms VADER lacks, added with moderate values: elevated (-0.8, 1,017 uses), deterioration and deteriorated (-1.5), unanchored (-1.5), anchored (+0.8), headwinds (-1.0), tailwinds (+1.0), resilient and resilience (+1.2).
+- Left unscored on purpose because their tone depends on what they describe: subdued, moderate, firming, upside, slack, transitory, persistent, accommodative, restrictive.
+
+Keyword self-exclusion (`EXCLUDE_KEYWORD_FROM_SCORE = True`): VADER scores "uncertainty" -1.4, "recession" -1.8 and "unemployment" -1.9, so every sentence about those topics started negative before any surrounding language counted. The hit's own keyword is now removed from the lexicon when scoring its sentence; other keywords in the sentence still count. This changes what the sentiment of a keyword means: it is now the tone of the language around the word ("reduced uncertainty" positive, "elevated uncertainty" negative), consistent with the project's definition. It can be switched off.
+
+Effect on all hits (sentence mode; mean score, then positive / neutral / negative share):
+
+| | Plain VADER | Fed words | Fed words and self-exclusion |
+|---|---|---|---|
+| uncertainty | -0.19, 27/5/69% | -0.34, 15/4/82% | -0.04, 33/23/44% |
+| inflation | +0.09, 47/21/32% | +0.00, 33/34/33% | +0.00, 33/34/33% |
+| employment | +0.21, 55/23/22% | +0.12, 44/32/24% | +0.12, 44/32/24% |
+| recession | -0.33, 22/2/77% | -0.45, 12/2/86% | -0.13, 30/16/54% |
+| tightening | +0.11, 51/17/31% | -0.02, 33/30/37% | -0.02, 33/30/37% |
+| all hits | +0.09, 47/20/33% | -0.01, 33/31/36% | +0.02, 35/33/33% |
+
+25 percent of hits changed tone label. Spot checks: descriptive and procedural sentences now read neutral; "elevated" and "upside risks" language reads negative; "inflation ... still were low" is no longer negative.
+
+Limits a word list cannot fix: "How soon the gloom ... would dissipate was subject to substantial uncertainty" still scores +0.92 (from "pickup", "profits"); "a major source of uncertainty ... the strength of such investment" scores +0.23 once the keyword is excluded. The Statement on Longer-Run Goals, repeated in minutes since 2012, contributes the same boilerplate sentences each year. Loughran-McDonald (a finance dictionary) is free for academic research but needs a license for commercial use (sraf.nd.edu, checked 2026-11-08) and is not included.
 
 ## Interpreting results with care
 

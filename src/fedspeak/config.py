@@ -21,6 +21,8 @@ HYPHENATED_EXCEPTIONS = ["maximum-employment"]   # compounds that still count (m
 CONTEXT_MODE = "sentence" # "sentence" (the hit's sentence) or "window" (CONTEXT_WINDOW words each side)
 CONTEXT_WINDOW = 75       # window mode: words on each side of keyword to extract for sentiment
 SENTENCE_NEIGHBORS = 0    # sentence mode: extra sentences on each side of the hit's sentence
+FED_LEXICON = DATA_DIR / "lexicon" / "fed_vader_overrides.csv"  # Fed adjustments to VADER's words; None for plain VADER
+EXCLUDE_KEYWORD_FROM_SCORE = True  # the keyword's own words do not score its sentence ("recession" is not counted as negative)
 
 # --- Outputs (git-ignored) ---
 OUTPUT_DIR = PROJECT_ROOT / "output"

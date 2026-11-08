@@ -1,9 +1,8 @@
 """Hit records (plan 1.3): every field must be checkable against the text."""
 
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
+from fedspeak.config import FED_LEXICON
 from fedspeak.match import find_hits
-from fedspeak.sentiment import score_hits
+from fedspeak.sentiment import get_analyzer, score_hits
 
 TEXT = ("Inflation remained elevated. " + " ".join(f"w{i}" for i in range(40)) +
         " Participants saw recession risks and uncertainty about inflation. " +
@@ -37,8 +36,8 @@ def test_first_hit_window_is_cut_at_document_start():
 
 
 def test_stored_score_is_the_score_of_the_stored_context():
-    analyzer = SentimentIntensityAnalyzer()
     for r in records():
+        analyzer = get_analyzer(FED_LEXICON, r["keyword"].split())
         assert r["score"] == analyzer.polarity_scores(r["context"])["compound"]
 
 
