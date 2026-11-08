@@ -1,0 +1,49 @@
+# Changelog
+
+Newest first.
+
+## Version 5: Layout spacing
+
+- `make_subplots` `vertical_spacing` raised from 0.06 to 0.12.
+- Figure `height` raised from 950 to 1100.
+- Reason: year labels added in version 4 overlapped the titles of the panels below. A further step to spacing 0.14 and height 1200 is available if still tight.
+
+## Version 4: Year labels and plain English summary
+
+- Year tick labels on panels 1 and 2 (`tickformat="%Y"`, `dtick="M12"`, `tickangle=-45`).
+- Removed `annotation_text` and `annotation_position` from the COVID shading to reduce clutter. Shading stays.
+- Added `print_summary(df, keywords)`: a guide to reading each panel, a sentiment score scale, and a snapshot of the latest meeting with a tone label per keyword.
+- `print_summary` is called after `build_dashboard` in the run block.
+- Removed decorative characters from the summary text. Removed the claim that bottom-right scatter points are historically a leading signal, since the project has not tested that.
+
+## Version 3: Robustness updates
+
+- `os.walk` replaces `os.listdir` so PDFs in year or month subfolders are found.
+- Guard for an empty result: prints a message and exits instead of crashing.
+- `PDF_DIR` set to `D:\FOMC_Minutes`.
+- Run block wrapped in `if __name__ == "__main__"`.
+
+## Version 2: Sentiment and interactivity
+
+- VADER sentiment scored on a 75-word window around each keyword hit.
+- Plotly dashboard replaces the static matplotlib chart: frequency panel, sentiment panel, frequency vs sentiment scatter.
+- 4-meeting rolling averages.
+- `export_snippets` helper for sanity-checking sentiment.
+- Hover templates, legend grouping so one click toggles all of a keyword's traces, dark theme, COVID shading.
+
+## Version 1: Initial script
+
+- pdfplumber text extraction.
+- Regex keyword counts normalized per 1,000 words.
+- Date parsing from filenames (`YYYYMMDD` or `YYYY-MM-DD`).
+- Matplotlib line chart.
+
+## Setup notes from Jupyter and Anaconda use
+
+- `pdfplumber`, `vaderSentiment` and `plotly` are not in base Anaconda. If `ModuleNotFoundError` persists after install, use the kernel's own interpreter:
+  ```python
+  import sys
+  !{sys.executable} -m pip install pdfplumber vaderSentiment plotly
+  ```
+  then restart the kernel.
+- For inline charts in a notebook: `import plotly.io as pio` and `pio.renderers.default = "notebook"`.

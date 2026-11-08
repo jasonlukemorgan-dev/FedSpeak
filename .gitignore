@@ -1,0 +1,16 @@
+# Generated outputs
+output/
+fomc_analysis.csv
+fomc_dashboard.html
+
+# Source PDFs (large, kept outside the repo)
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
