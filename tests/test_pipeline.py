@@ -36,6 +36,26 @@ def test_reads_every_meeting_and_adds_manifest_fields(tmp_path):
     assert df.loc[1, "recession_raw"] == 5
 
 
+def test_no_mentions_gives_missing_sentiment_not_zero(tmp_path):
+    # Known issue 3: a 0 here looked identical to genuinely neutral tone.
+    text_dir, manifest = make_corpus(tmp_path)
+    df, _ = process_minutes(text_dir, KW, manifest_path=manifest)
+    jan = df.iloc[0]
+    assert jan["recession_raw"] == 0 and jan["recession_sentiment_n"] == 0
+    assert pd.isna(jan["recession_sentiment"])
+    assert not pd.isna(df.iloc[1]["recession_sentiment"])
+
+
+def test_summary_reports_no_mentions(tmp_path, capsys):
+    from fedspeak.report import print_summary
+    text_dir, manifest = make_corpus(tmp_path)
+    df, _ = process_minutes(text_dir, KW, manifest_path=manifest)
+    print_summary(df, KW)   # latest meeting (2021) has no "recession"
+    out = capsys.readouterr().out
+    assert "recession       freq: 0.00/1k words   sentiment: none (not mentioned)" in out
+    assert "about six months" in out
+
+
 def test_date_range_is_inclusive(tmp_path):
     text_dir, manifest = make_corpus(tmp_path)
     df, _ = process_minutes(text_dir, KW, start_date="2020-03-15", end_date="2021-01-27")

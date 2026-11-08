@@ -43,8 +43,8 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 
 1. Fixed in version 6: snippets are printed for every keyword in `KEYWORDS`.
 2. Recession shading covers only Feb to Apr 2020. Other episodes (2022 inflation surge, rate hike cycles) are not marked. Consider a configurable list of events.
-3. Zero-mention meetings get sentiment 0, indistinguishable from neutral. The flat zero stretches visible on the dotted lines in panel 2 for rare words like "recession" and "tightening" are partly this artifact. Return NaN when there are no mentions and let Plotly leave gaps (or use `connectgaps=False`). The `_sentiment_n` column already holds mention counts and could drive marker size or filtering.
-4. The summary text and earlier discussion describe the 4-meeting rolling average as about one year. The FOMC holds eight scheduled meetings a year, so four meetings is about six months. Either change the window to 8 or fix the wording.
+3. Fixed in version 6: sentiment is NaN when a keyword has no mentions, and the dashboard leaves gaps. Across 270 meetings this removed fake 0.000 "neutral" scores from 191 meetings for "recession", 59 for "tightening" and 13 for "uncertainty". The `_sentiment_n` column could still drive marker size or filtering.
+4. Fixed in version 6: the summary now describes the 4-meeting average as about six months.
 5. VADER is not a finance lexicon. Words like "tightening" and "inflation" carry specific meaning in this setting. Suggested overrides: tightening -0.5, accommodative +0.4, headwinds -0.6, resilient +0.5, applied through `analyzer.lexicon.update(...)`.
 6. Fixed in version 6: `match.find_hits` handles multi-word keywords, and frequency and sentiment share it.
 7. Fixed in version 6: unused `import nltk` removed.

@@ -38,7 +38,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; next is 1.4 (remaining tests, zero mentions as NaN), then 1.5 audit page and 1.6 sentence-based windows. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 (zero mentions as NaN) is done; next are 1.6 sentence-based scoring as an option and 1.5 audit page showing both methods. Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs go in `output/` (git-ignored): `fomc_analysis.csv`, `hits.csv`, `fomc_dashboard.html`, `verify/`.
 
@@ -82,7 +82,5 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 See `docs/context.md` for detail. Short list:
 
 1. Recession shading is hardcoded to COVID only.
-2. Months with zero keyword mentions get a sentiment of 0, which looks identical to genuinely neutral tone. Should be NaN.
-3. The "4-meeting average" label says about one year in the summary text, but the FOMC meets eight times a year, so four meetings is about six months.
-4. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
-5. The 75-word window overlaps heavily between hits and picks up tone from unrelated sentences (see `docs/context.md`, 1.3). Plan 1.6.
+2. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
+3. The 75-word window overlaps heavily between hits and picks up tone from unrelated sentences (see `docs/context.md`, 1.3). Plan 1.6.

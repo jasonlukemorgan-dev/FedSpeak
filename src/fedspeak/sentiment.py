@@ -57,7 +57,7 @@ def score_hits(text, hits, window=CONTEXT_WINDOW):
 def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None):
     """Average VADER score per keyword over its hits.
 
-    Returns ({"<kw>_sentiment": avg, "<kw>_sentiment_n": hits}, records), where
+    Returns ({"<kw>_sentiment": avg or NaN if no hits, "<kw>_sentiment_n": hits}, records), where
     records come from score_hits. Hits come from match.find_hits, the same hits
     that frequency counts use.
     """
@@ -68,7 +68,8 @@ def keyword_sentiment(text, keywords, window=CONTEXT_WINDOW, hits=None):
     avg_sentiments = {}
     for kw in keywords:
         scores = [r["score"] for r in records if r["keyword"] == kw]
-        avg_sentiments[f"{kw}_sentiment"] = sum(scores) / len(scores) if scores else 0
+        # No mentions means no tone to measure: NaN, not 0, which would read as neutral.
+        avg_sentiments[f"{kw}_sentiment"] = sum(scores) / len(scores) if scores else float("nan")
         avg_sentiments[f"{kw}_sentiment_n"] = len(scores)
 
     return avg_sentiments, records

@@ -6,8 +6,7 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 ## 1. Correctness fixes
 
-- (fix) Return NaN, not 0, for sentiment when a keyword has no mentions in a meeting. Use `_sentiment_n` to size markers or mask low-count points.
-- (fix) Make the rolling window and its label consistent. Eight meetings a year means four meetings is about six months.
+- Use `_sentiment_n` to size markers or mask low-count sentiment points.
 
 ## 2. Analytical quality
 

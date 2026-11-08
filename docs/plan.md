@@ -130,6 +130,8 @@ Add `tests/` with pytest and small synthetic texts where the correct answer is k
 
 pytest is a small dependency for tests only.
 
+Status: done. Tests cover the cases above except line-break hyphenation, which no longer arises because text comes from HTML. Zero hits now give NaN sentiment (191 of 270 meetings for "recession" had shown a fake 0.000).
+
 ### 1.5 Human audit
 
 Generate `output/audit.html` showing a random sample of 30 to 50 hits per keyword, each with the keyword highlighted, the window boundaries marked, the page number and the score. Use a fixed random seed so the sample can be regenerated. A reader marks each hit correct or incorrect. This is the only check that the context is meaningful and not just correctly counted.
