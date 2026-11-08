@@ -96,6 +96,8 @@ Fix: one matching function that returns a list of hit records, used by both freq
 
 Check: for every meeting and keyword, the number of hits behind the sentiment score equals the raw count. Any difference fails.
 
+Status: done. `match.find_hits` is the single matcher; the pipeline raises an error on any mismatch, and tests cover the matching rules and window boundaries. Results and the open hyphenated-compound question are in `docs/context.md`.
+
 ### 1.3 Hit records
 
 Replace the truncated snippet strings with a full record per hit:

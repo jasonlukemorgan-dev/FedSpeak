@@ -20,7 +20,7 @@ FedSpeak/
     fetch.py           downloads minutes (HTML + PDF) from federalreserve.gov, writes the manifest
     extract.py         date from filename, text from PDF and HTML, character normalization
     verify.py          verification checks (`fedspeak verify`: PDF vs HTML comparison)
-    match.py           keyword frequency
+    match.py           find_hits (the one keyword matcher) and frequency
     sentiment.py       VADER score around each keyword hit
     pipeline.py        reads data/text and runs counting and sentiment per meeting
     dashboard.py       Plotly dashboard
@@ -38,7 +38,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 (text source) are done; next is 1.2, one matcher shared by frequency and sentiment. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0, 1.1 (text source) and 1.2 (shared matcher) are done; next is 1.3, full hit records written to output. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs (`fomc_analysis.csv`, `fomc_dashboard.html`) should go in an `output/` folder if you add output handling.
 
@@ -57,11 +57,12 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 
 1. `fetch.fetch_minutes` downloads, then `extract.build_text_corpus` writes `data/text/` using `extract.extract_text_from_html`.
 2. `pipeline.process_minutes` reads `data/text/`, applies the date range, calls the steps below per meeting, and adds meeting type and release date from the manifest.
-3. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
-4. `sentiment.keyword_sentiment` takes a 75-word window on each side of every keyword hit, scores it with VADER, and averages per keyword per meeting.
-5. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
-6. `report.print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
-7. `report.export_snippets` prints the most sentiment-charged snippets for one keyword as a sanity check.
+3. `match.find_hits` finds every keyword hit once per meeting (rules in the module docstring; hyphenated compounds controlled by `MATCH_HYPHENATED`). Steps 4 and 5 both use these hits, and the pipeline raises an error if their counts ever differ.
+4. `match.count_keywords` returns frequency per 1,000 words plus raw counts.
+5. `sentiment.keyword_sentiment` takes a 75-word window on each side of every hit, scores it with VADER, and averages per keyword per meeting.
+6. `dashboard.build_dashboard` draws three panels: frequency over time, sentiment over time, frequency vs sentiment scatter.
+7. `report.print_summary` prints a plain English guide to reading the charts plus a snapshot of the latest meeting.
+8. `report.export_snippets` prints the most sentiment-charged snippets for one keyword as a sanity check.
 
 ## Current dashboard settings (do not revert without asking)
 
@@ -85,5 +86,4 @@ See `docs/context.md` for detail. Short list:
 3. Months with zero keyword mentions get a sentiment of 0, which looks identical to genuinely neutral tone. Should be NaN.
 4. The "4-meeting average" label says about one year in the summary text, but the FOMC meets eight times a year, so four meetings is about six months.
 5. VADER is a general-purpose lexicon, not a finance lexicon. Fed-specific word overrides are not yet applied.
-6. Keywords are matched as single tokens, so multi-word phrases such as "price stability" will not match in `keyword_sentiment`.
-7. Snippets are truncated to 200 characters when stored, so `export_snippets` re-scores truncated text and can disagree with the score used in the charts.
+6. Snippets are truncated to 200 characters when stored, so `export_snippets` re-scores truncated text and can disagree with the score used in the charts.

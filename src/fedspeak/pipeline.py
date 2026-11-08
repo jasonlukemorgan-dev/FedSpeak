@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from fedspeak.extract import extract_date_from_filename
-from fedspeak.match import count_keywords
+from fedspeak.match import count_keywords, find_hits
 from fedspeak.sentiment import keyword_sentiment
 
 
@@ -45,8 +45,14 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
 
     for date, path in tqdm(selected, desc="Analyzing minutes"):
         text = path.read_text(encoding="utf-8")
-        freq = count_keywords(text, keywords)
-        sentiments, snippets = keyword_sentiment(text, keywords)
+        hits = find_hits(text, keywords)
+        freq = count_keywords(text, keywords, hits=hits)
+        sentiments, snippets = keyword_sentiment(text, keywords, hits=hits)
+        for kw in keywords:
+            # Frequency and sentiment must describe the same hits (plan 1.2).
+            if freq[f"{kw}_raw"] != sentiments[f"{kw}_sentiment_n"]:
+                raise RuntimeError(f"{path.name}: {kw} has {freq[f'{kw}_raw']} frequency hits "
+                                   f"but {sentiments[f'{kw}_sentiment_n']} sentiment hits")
 
         for kw, snips in snippets.items():
             for s in snips:

@@ -46,7 +46,7 @@ Changing `KEYWORDS` updates frequency, sentiment and all three chart panels on t
 3. Zero-mention meetings get sentiment 0, indistinguishable from neutral. The flat zero stretches visible on the dotted lines in panel 2 for rare words like "recession" and "tightening" are partly this artifact. Return NaN when there are no mentions and let Plotly leave gaps (or use `connectgaps=False`). The `_sentiment_n` column already holds mention counts and could drive marker size or filtering.
 4. The summary text and earlier discussion describe the 4-meeting rolling average as about one year. The FOMC holds eight scheduled meetings a year, so four meetings is about six months. Either change the window to 8 or fix the wording.
 5. VADER is not a finance lexicon. Words like "tightening" and "inflation" carry specific meaning in this setting. Suggested overrides: tightening -0.5, accommodative +0.4, headwinds -0.6, resilient +0.5, applied through `analyzer.lexicon.update(...)`.
-6. `keyword_sentiment` compares single tokens, so multi-word keywords never match there even though `count_keywords` would match them. Needs phrase-aware matching.
+6. Fixed in version 6: `match.find_hits` handles multi-word keywords, and frequency and sentiment share it.
 7. Fixed in version 6: unused `import nltk` removed.
 8. Stored snippets are cut at 200 characters, so `export_snippets` re-scores shortened text and can show scores that differ from those behind the charts. Store the score alongside the snippet instead of recomputing.
 9. Fixed in version 6: text is extracted once into `data/text/` and the analysis reads those files.
@@ -75,6 +75,14 @@ Run with `fedspeak verify` on the 152 meetings that have both versions (mid-2007
 - Many older pages declare no character encoding and automatic detection can choose the wrong one. Decoding is now fixed: UTF-8, else Windows-1252 (12 pages).
 - 26 pages from 1999 to 2007 contain broken characters (U+FFFD) in the Fed's own files, usually lost apostrophes. Restored as apostrophes between letters, otherwise spaces.
 - Soft hyphens inside words in 2016 to 2024 pages ("al­though") split words for matching. Removed for all text, along with zero-width joiners; non-breaking hyphens become ordinary hyphens.
+
+### 1.2 Shared matcher (2026-11-08)
+
+Before: `count_keywords` used `\b` regex on the whole text, while `keyword_sentiment` stripped non-letters from each token and compared it to the keyword. Sentiment therefore missed dash-joined forms ("inflation—as"), possessives ("inflation's"), hyphenated compounds and every multi-word keyword. Across all 270 meetings, sentiment was built on fewer hits than frequency in 175 meetings for "inflation" and 98 for "employment"; 18 percent of "recession" mentions never reached a sentiment score.
+
+After: `match.find_hits` is the only matcher. Frequency counts are unchanged; sentiment hit counts now equal them in every meeting, and the pipeline raises an error if they ever differ. Mean change in per-meeting sentiment was small (0.001 to 0.025 by keyword), but individual meetings moved by up to 0.77 ("recession", a meeting whose only mentions were "pre-recession").
+
+Open question, hyphenated compounds (`MATCH_HYPHENATED`, default True so frequency stays as before). Most common compounds in the corpus: "Treasury Inflation-Protected Securities" (102, a bond name), "inflation-indexed" (38), "employment-to-population ratio" (100, a statistic), "maximum-employment" (82, the mandate), "pre-recession" (23, a time reference). Excluding them removes 1.3 percent of "inflation" hits, 6.6 percent of "employment" and 17.2 percent of "recession".
 
 ## Interpreting results with care
 
