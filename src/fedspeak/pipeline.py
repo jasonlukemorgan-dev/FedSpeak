@@ -13,7 +13,7 @@ from fedspeak.sentiment import keyword_sentiment
 
 HIT_COLUMNS = [
     "date", "meeting_type", "filename", "keyword", "matched", "char_start", "char_end",
-    "word_start", "word_end", "words_left", "words_right", "window_overlap_words", "score",
+    "word_start", "word_end", "words_left", "words_right", "window_overlap_words", "split_at", "score",
     "lm_positive", "lm_negative", "lm_uncertainty", "lm_tone", "context",
 ]
 
@@ -74,7 +74,9 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
         results.append({"date": date, "filename": path.name, **freq, **sentiments, **doc})
 
     df = pd.DataFrame(results).sort_values("date").reset_index(drop=True)
-    hit_cols = [c for c in HIT_COLUMNS if c != "meeting_type" and (lm or not c.startswith("lm_"))]
+    clause_mode = bool(hit_rows) and "split_at" in hit_rows[0]   # split_at exists only in clause mode
+    hit_cols = [c for c in HIT_COLUMNS if c != "meeting_type" and (lm or not c.startswith("lm_"))
+                and (clause_mode or c != "split_at")]
     hits_df = pd.DataFrame(hit_rows, columns=hit_cols)
 
     if manifest_path and Path(manifest_path).exists():

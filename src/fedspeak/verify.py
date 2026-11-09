@@ -79,6 +79,7 @@ CONTEXT_VARIANTS = {
     "window75": dict(mode="window", window=75),
     "sentence": dict(mode="sentence", neighbors=0),
     "sentence_pm1": dict(mode="sentence", neighbors=1),
+    "clause": dict(mode="clause"),
 }
 
 
@@ -132,6 +133,11 @@ def print_context_summary(df, keywords=KEYWORDS, variants=CONTEXT_VARIANTS):
     for n in names[1:]:
         same = (df[f"{base}_score"].map(_tone) == df[f"{n}_score"].map(_tone)).mean()
         print(f"Same tone label, {base} vs {n}: {same:.0%} of hits")
+    if "sentence" in names and "clause" in names:
+        split = df["clause_words"] < df["sentence_words"]
+        same = (df["sentence_score"].map(_tone) == df["clause_score"].map(_tone))[split].mean()
+        print(f"Clause shorter than sentence: {split.mean():.0%} of hits; "
+              f"of those, same tone label as sentence: {same:.0%}")
     print("\nPer-meeting average sentiment, correlation with window75:")
     meet = df.groupby(["date", "keyword"])[[f"{n}_score" for n in names]].mean().reset_index()
     for kw in keywords:

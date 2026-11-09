@@ -82,6 +82,18 @@ def test_hit_table_matches_meeting_counts(tmp_path):
     assert set(hits.meeting_type) == {"scheduled", "unscheduled"}
 
 
+def test_hit_table_records_clause_split(tmp_path):
+    # Default CONTEXT_MODE is "clause": hits.csv says where each sentence was cut.
+    text_dir = tmp_path / "text"
+    text_dir.mkdir()
+    (text_dir / text_filename("2022-06-15")).write_text(
+        "Growth slowed sharply in the quarter, but inflation remained very high and broad.", encoding="utf-8")
+    _, hits = process_minutes(text_dir, ["inflation"])
+    assert hits.loc[0, "split_at"] == "but"
+    assert hits.loc[0, "context"] == "inflation remained very high and broad."
+    assert list(hits.columns).index("split_at") == list(hits.columns).index("window_overlap_words") + 1
+
+
 def test_build_text_corpus_uses_html_and_skips_existing(tmp_path, monkeypatch):
     import fedspeak.config as config
     monkeypatch.setattr(config, "PROJECT_ROOT", tmp_path)

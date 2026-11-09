@@ -165,6 +165,38 @@ First results:
 - Whole-document LM tone is most negative in 2001 (-0.48), 2007 (-0.40) and 2008 (-0.62); negative words peak at 30.2 per 1,000 in 2001 and 27.7 in 2008. This matches the recessions and is a basic validity check.
 - LM uncertainty peaks in 2007 (20.1 per 1,000) but is lowest in 2020 to 2023 (about 14). The uncertainty list includes hedging words ("may", "could", "depend"), so it tracks drafting style as well as uncertainty. Treat it with caution and read the text behind any movement.
 
+### Clause scoring at contrast words (2026-11-09)
+
+Problem: a sentence such as "Inflation remained subdued, but growth was disappointing" gives "inflation" the tone of the other half. `CONTEXT_MODE = "clause"` splits the hit's sentence at contrast words and scores only the keyword's clause, leaving the contrast word out (VADER weights everything after a leading "but" by 1.5).
+
+Rules were set from a sample of 20 meetings (1,264 hits; 24 percent of keyword sentences contain a contrast word):
+- "However" opened the sentence in 53 of 85 cases and "nonetheless" and "nevertheless" nearly always do. There they refer back to the previous sentence, so they do not split. "however" splits only after a semicolon.
+- "yet" was a time word in every case ("not yet", "yet to be realized") and never splits.
+- "while" splits after a comma or semicolon or at the start of a sentence. Without a comma it usually means "at the same time" ("depreciated against the yen while depreciating against the Canadian dollar"). Also excluded: "while" followed by an -ing word, and "a while".
+- "though" splits after a comma or semicolon, except ", though," (an adverb: "Others, though, saw") and short asides closed by a comma within three words ("the probability, though minor, of a fall").
+- "but" splits after a comma, semicolon or dash, not in "modest but rising" or "but also".
+- A sentence opening with "Although", "Though", "Whereas" or "While" is cut at the first comma.
+- A clause with fewer than three words besides the keyword falls back to the whole sentence.
+
+Corpus results (17,153 hits, Fed-adjusted VADER, keyword excluded; `fedspeak verify context`):
+- 2,423 hits (14 percent) are split: but 883, while 762, although 532, though 160, however 54, others under 20.
+- Median words scored: 29 (sentence 32). Tone positive / neutral / negative: 33 / 35 / 32 percent (sentence 35 / 33 / 33).
+- Of split hits, 72 percent keep the same tone label. Most changes go to neutral (314 positive and 219 negative become neutral); 119 flip sign.
+- Mean score of split hits, sentence to clause: uncertainty +0.08 to +0.02, inflation +0.04 to +0.03, employment +0.06 to +0.08, recession -0.31 to -0.14 (20 hits), tightening unchanged.
+- Per-meeting averages correlate with sentence mode at 0.93 to 0.98 by keyword; the largest single meeting shift is 0.83.
+
+Spot checks (random sample of 15 split hits): most clauses are the right unit. "Recent developments had increased ... uncertainties ..., most members felt the risks continued to point toward rising inflation" moves from -0.67 to -0.27 once the uncertainty clause is dropped; "substantial uncertainty surrounded the outlook ... inflation", previously +0.15 from the clause before "however", now reads -0.38.
+
+Known limits:
+- A pronoun carries the keyword into the next clause: "Although inflation had moderated ..., it remained well above the Committee's goal" scores only "inflation had moderated" (0.00) and loses the main point.
+- Elliptical clauses: "expect inflation to remain low ..., but to rise to 2 percent" keeps only the first half for "inflation".
+- A sentence-initial clause with its own comma is cut too early ("Although energy prices, which are volatile, rose, ...").
+- Shorter clauses contain fewer tone words, so more hits read neutral. Part of that is correct (the tone belonged to the other clause), part is VADER missing words ("concerns ... had increased appreciably" scores 0.00).
+
+Decision (2026-11-09): default `CONTEXT_MODE` is now "clause", on the corpus evidence and spot checks above, again without audit labels (`fedspeak audit` shows the clause score beside the others for a later check). "sentence" stays available as a setting.
+
+Effect on corpus averages (mean of per-meeting sentiment, sentence to clause; Fed-adjusted VADER): uncertainty -0.014 to -0.030, inflation +0.003 to +0.001, employment +0.103 to +0.104, recession -0.107 to -0.075, tightening -0.012 to -0.009. Loughran-McDonald net tone moves by at most 0.03 (tightening -0.34 to -0.30). Largest single-meeting shifts: recession 0.83, uncertainty 0.45, tightening 0.44. Frequency is unchanged. The change is small on average and concentrated in individual meetings, so results from before it are broadly but not exactly comparable.
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.

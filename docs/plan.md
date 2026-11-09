@@ -146,6 +146,8 @@ Option to evaluate: score the sentence (or sentence plus one on each side) aroun
 
 Status: sentence mode built (`CONTEXT_MODE`, `SENTENCE_NEIGHBORS`) and compared on every hit (`fedspeak verify context`, findings in `docs/context.md`). Default switched to "sentence" on 2026-11-08 on the corpus evidence; the audit labelling pass is deferred and remains the confirming check.
 
+Clause mode (2026-11-09): `CONTEXT_MODE = "clause"` scores only the keyword's clause, split at contrast words. Built, tested and compared on every hit (findings in `docs/context.md`). Default switched to "clause" on 2026-11-09; the audit labelling pass remains the confirming check.
+
 ### Done when
 
 - Extraction counts agree with the HTML minutes, or every remaining difference is explained.

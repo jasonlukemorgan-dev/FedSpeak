@@ -39,7 +39,7 @@ Choose what to analyze in `src/fedspeak/config.py`:
 KEYWORDS = ["uncertainty", "inflation", "employment", "recession", "tightening"]
 START_DATE = None   # e.g. "2016-01-01"
 END_DATE = None
-CONTEXT_MODE = "sentence"   # or "window" for CONTEXT_WINDOW words on each side
+CONTEXT_MODE = "clause"     # the keyword's clause; or "sentence", or "window" for CONTEXT_WINDOW words on each side
 ```
 
 ## Run
