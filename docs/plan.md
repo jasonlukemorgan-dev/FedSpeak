@@ -214,6 +214,54 @@ Align by meeting date: the dots and the minutes describe the same meeting, even 
 
 Dot plot code lives in `dots.py` and its tables in the DuckDB file (see section 0).
 
+## 4. Stance model (hawkish or dovish)
+
+Chosen as the next step on 2026-11-09 (option a). Scoped, not started: waiting on the decisions listed at the end of this section.
+
+### Model
+
+- `gtfintechlab/FOMC-RoBERTa` on Hugging Face, a RoBERTa-large fine-tune from Shah et al. 2023, "Trillion Dollar Words" (ACL 2023, https://aclanthology.org/2023.acl-long.368). Labels: 0 dovish, 1 hawkish, 2 neutral. Weights: `pytorch_model.bin`, 1.42 GB.
+- Training text: sentences from FOMC minutes, speeches and press conference transcripts. From memory of the paper, to confirm: sentences were also split at contrast words ("but", "however", "although", "while"), close to our clause mode. Confirm the date range and reported F1 from the paper before writing up results.
+- License: model, data and code are CC BY-NC 4.0. Non-commercial use is allowed with attribution (credit, the license name and a link). Add attribution to README and `docs/context.md`. Recheck if the work becomes commercial.
+- Access is gated: the user accepts the terms on Hugging Face with their own account and runs `hf auth login` once. Pin a model revision for reproducibility.
+
+### Files
+
+- New `src/fedspeak/stance.py`: loads the model at the pinned revision (GPU if present, CPU otherwise), classifies texts in batches, caches results.
+- `config.py`: `STANCE_MODEL` (None means off, the default), `STANCE_MODEL_REVISION`, `STANCE_CACHE`.
+- `pipeline.py`: when stance is on and the libraries are installed, scores each hit's context and adds stance columns and per-meeting averages. Otherwise prints a hint and skips stance, as with LM.
+- `dashboard.py`: `"stance"` as a `DASHBOARD_SENTIMENT` option.
+- `verify.py`: `fedspeak verify stance` summary for the checks below.
+
+### Measures
+
+- Per hit: `stance_label`, `p_hawkish`, `p_dovish`, `p_neutral`, and `stance_score = p_hawkish - p_dovish` (-1 to +1). Scored on the same clause VADER scores, with the keyword kept in: the model needs the whole clause to read it.
+- Per meeting and keyword: mean `stance_score`, NaN when there are no hits.
+- Per meeting, whole document (if approved): the paper's index, (hawkish sentences - dovish sentences) / all sentences. Keyword-free, about 120k sentences for the full corpus.
+
+### Dependencies and runtime
+
+- `torch` and `transformers` as an optional extra (`uv sync --extra stance`), so a plain `uv sync` stays light. CUDA torch on Windows needs a PyTorch index under `[tool.uv.sources]`. About 2.5 GB of install plus the 1.4 GB model in the Hugging Face cache.
+- Cache keyed by a hash of (model, revision, text), git-ignored under `output/`, so reruns and keyword changes only score new text.
+- Runtime: minutes on the RTX 4050 at half precision; an hour or more on CPU for the document index, so offer a hits-only setting for CPU runs.
+
+### Tests (no network, no torch)
+
+- `stance.py` accepts any classifier function. Tests pass a fake one with fixed probabilities and check: label and probability columns, the score formula, NaN for no hits, the document index, cache reuse without calling the classifier, and unchanged output with stance off.
+- One optional smoke test with the real model, skipped when torch or the cached weights are missing.
+
+### Checks
+
+- Document index reads hawkish around 1994, 2004 to 2006 and 2022, dovish in 2001, 2008 and 2020.
+- Correlation with VADER and LM tone. They measure different things; low agreement is expected and worth recording.
+- Hand-read 20 to 30 hit clauses and record the results in `docs/context.md`.
+
+### Open decisions for the user
+
+1. Torch build: CUDA (recommended, uses the GPU) or CPU-only (smaller install, slower).
+2. Scope: per-hit stance plus the whole-document index (recommended), or per-hit only.
+3. Dashboard: stance as a `DASHBOARD_SENTIMENT` option only, or also a fourth panel for the document index (changes the layout settings).
+
 ## Open decisions
 
 - EWMA as a replacement for the rolling mean, or shown beside it.
