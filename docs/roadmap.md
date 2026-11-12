@@ -10,7 +10,7 @@ See `docs/plan.md` for the detailed plan covering data verification, additional 
 
 ## 2. Analytical quality
 
-- Learned model of Fed tone or stance, trained on labelled sentences. Scoped in `docs/plan.md` section 4 (FOMC-RoBERTa, pretrained).
+- Learned model of Fed tone or stance, trained on labelled sentences. FOMC-RoBERTa, pretrained (`docs/plan.md` section 4): plumbing built, waiting on Hugging Face access.
 - Compare VADER against a finance-specific model such as FinBERT on a sample of snippets to check agreement.
 - Configurable event shading: list of (label, start, end) for COVID, 2022 inflation surge, hiking cycles, taper tantrum.
 - Overlay a market series (fed funds rate, VIX, 10-year yield) to test whether language leads or lags.

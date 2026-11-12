@@ -24,6 +24,7 @@ FedSpeak/
     match.py           find_hits (the one keyword matcher) and frequency
     sentiment.py       sentence splitting and VADER score for each keyword hit
     lm.py              Loughran-McDonald measures per hit and per document (optional dictionary)
+    stance.py          hawkish/dovish stance from FOMC-RoBERTa per hit and per document (optional extra, cached)
     pipeline.py        reads data/text and runs counting and sentiment per meeting
     dashboard.py       Plotly dashboard
     report.py          console summary and snippet inspection
@@ -42,7 +43,7 @@ FedSpeak/
     plan.md            detailed plan: verification, metrics, dot plot
 ```
 
-Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 to 1.6 are done; `CONTEXT_MODE` defaults to "clause": the hit's sentence split at contrast words (decided 2026-11-09, after "sentence" on 2026-11-08; both without audit labels; the audit page is an optional later check). Section 1 remaining: an audit labelling pass when the user wants one. Fed word list, keyword self-exclusion, Loughran-McDonald and clause splitting (option b) are in. Next step chosen 2026-11-09: option (a), a hawkish/dovish stance model using the "Trillion Dollar Words" FOMC-RoBERTa (CC BY-NC 4.0). Scoped in section 4 of `docs/plan.md`, not started. Waiting on the user's three decisions listed there (torch build, scope, dashboard) and on the user accepting the model's terms on Hugging Face. Section 2 metrics (option c) come after. Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
+Current focus: section 1 (data verification) of `docs/plan.md`. Section 0 and 1.1 to 1.3 (text source, shared matcher, hit records) are done; 1.4 to 1.6 are done; `CONTEXT_MODE` defaults to "clause": the hit's sentence split at contrast words (decided 2026-11-09, after "sentence" on 2026-11-08; both without audit labels; the audit page is an optional later check). Section 1 remaining: an audit labelling pass when the user wants one. Fed word list, keyword self-exclusion, Loughran-McDonald and clause splitting (option b) are in. Next step chosen 2026-11-09: option (a), a hawkish/dovish stance model using the "Trillion Dollar Words" FOMC-RoBERTa (CC BY-NC 4.0), section 4 of `docs/plan.md`. Plumbing built 2026-11-12 (`stance.py`, CUDA torch as the `stance` extra, dashboard option and fourth panel), tested with a fake classifier, off by default. Waiting on Hugging Face access (requested 2026-11-12, reviewed about every 14 days); then pin the revision, run on the corpus and do the section 4 checks. Section 2 metrics (option c) come after. Sentiment is NaN when a keyword has no mentions; code downstream must handle NaN. Add new modules (`metrics.py`, `dots.py`) when their work starts, not as empty files.
 
 Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing loose at the root beyond the files listed above. Generated outputs go in `output/` (git-ignored): `fomc_analysis.csv`, `hits.csv`, `fomc_dashboard.html`, `verify/`.
 
@@ -53,7 +54,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 - Fetch range is not the analysis range. Users choose `KEYWORDS`, `START_DATE` and `END_DATE` in `config.py` at analysis time; nothing should hardcode a period.
 - Text source is HTML, not PDF (decided 2026-11-08 after verification 1.1: 2008 to 2024 PDFs are spliced across columns and pre-2020 PDFs include the SEP). `fetch` writes cleaned text for new meetings to `data/text/`; `uv run fedspeak extract --force` rebuilds all of it and must be run after any change to `extract.py`, with the resulting text diff committed. PDFs are kept only for cross-checks (`fedspeak verify`).
 - Downloaded and text files are named `fomcminutesYYYYMMDD.{pdf,htm,txt}`, using the last day of the meeting. The date parser depends on this.
-- Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip.
+- Install: `uv sync`. Add packages with `uv add <name>` (or `uv add --dev <name>` for test tools), never pip. Stance model: `uv sync --extra stance` and `uv run --extra stance fedspeak`.
 - Run: `uv run fedspeak fetch`, then `uv run fedspeak` (or `uv run python -m fedspeak`). Tests: `uv run pytest` (no network access in tests).
 - Outputs in `output/`: `fomc_analysis.csv` (one row per meeting), `hits.csv` (one row per keyword hit with scored context, the audit trail behind every number), `fomc_dashboard.html`, console summary.
 

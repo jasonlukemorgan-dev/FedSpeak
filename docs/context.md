@@ -197,6 +197,21 @@ Decision (2026-11-09): default `CONTEXT_MODE` is now "clause", on the corpus evi
 
 Effect on corpus averages (mean of per-meeting sentiment, sentence to clause; Fed-adjusted VADER): uncertainty -0.014 to -0.030, inflation +0.003 to +0.001, employment +0.103 to +0.104, recession -0.107 to -0.075, tightening -0.012 to -0.009. Loughran-McDonald net tone moves by at most 0.03 (tightening -0.34 to -0.30). Largest single-meeting shifts: recession 0.83, uncertainty 0.45, tightening 0.44. Frequency is unchanged. The change is small on average and concentrated in individual meetings, so results from before it are broadly but not exactly comparable.
 
+### Stance model, FOMC-RoBERTa (2026-11-12, not yet run on the corpus)
+
+Why: VADER and Loughran-McDonald measure tone, not policy direction. "Inflation remained elevated" is negative in tone and hawkish in stance; a dictionary cannot tell those apart. A model fine-tuned on FOMC text can.
+
+Model and attribution: `gtfintechlab/FOMC-RoBERTa`, Financial Services Innovation Lab, Georgia Tech; Shah, Paturi and Chava, "Trillion Dollar Words: A New Financial Dataset, Task & Market Analysis", ACL 2023 (https://aclanthology.org/2023.acl-long.368). Model, data and code are CC BY-NC 4.0: non-commercial use with attribution, which matches how the project is used now. Recheck if that changes. Access is gated and reviewed by the authors; the user requested access on 2026-11-12 (reviews happen about every 14 days).
+
+Decisions (2026-11-12):
+- CUDA build of torch, as an optional extra, so a plain `uv sync` stays light. The laptop's RTX 4050 (6 GB, driver CUDA 12.9) runs the model at half precision.
+- Scope: per-hit stance and the whole-meeting index.
+- Dashboard: `"stance"` as a `DASHBOARD_SENTIMENT` option and a fourth panel for the index. The user left the panel choice to Claude; the index is keyword-free, so it has no place in the per-keyword sentiment panel, and the plan's validity check (hawkish around 1994, 2004 to 2006 and 2022, dovish in 2001, 2008 and 2020) needs it on the timeline. The panel appears only when the index is in the results, so the three-panel layout settings are unchanged; with four panels the figure is 1450 high with spacing 0.09, about the same gap in pixels as before.
+- Input: the same clause VADER scores, keyword kept in (the model needs the whole clause). The document index uses every sentence from `sentiment.sentence_spans`, labelled by the most likely class.
+- Cache keyed by a hash of model, revision and text in `output/stance_cache.sqlite`. Only the small model config is fetched at startup, to confirm access; the weights load only when some text is not cached.
+
+Still to do after access is granted: pin `STANCE_MODEL_REVISION`, first corpus run, the checks in plan section 4 (index history, correlation with VADER and LM, 20 to 30 hand-read clauses), confirm the paper's training data range, clause splitting and reported F1, and `fedspeak verify stance`.
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.

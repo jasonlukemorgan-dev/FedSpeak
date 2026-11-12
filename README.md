@@ -9,7 +9,7 @@ Point it at a folder of FOMC minutes PDFs and a list of keywords. For every meet
 - How often each keyword appears, per 1,000 words, so meetings of different length are comparable.
 - The average sentiment of the sentence containing each keyword, scored from -1 (very negative) to +1 (very positive) using VADER.
 
-It then builds an interactive Plotly dashboard with three panels: frequency over time, sentiment over time, and a scatter of frequency against sentiment.
+It then builds an interactive Plotly dashboard with three panels: frequency over time, sentiment over time, and a scatter of frequency against sentiment. With the optional stance model, a fourth panel shows a whole-meeting hawkish/dovish index.
 
 ## Setup
 
@@ -32,6 +32,8 @@ This downloads every set of FOMC minutes from 1993 onward from federalreserve.go
 The cleaned text is already in the repository, so the analysis runs without downloading anything. Text comes from the HTML version of the minutes: the PDFs for 2008 to 2024 use a two-column layout that PDF extraction splices together, and PDFs before 2020 include the Summary of Economic Projections. Details in `docs/context.md`.
 
 Optional: for Loughran-McDonald finance-dictionary measures, download the Master Dictionary CSV from https://sraf.nd.edu/loughranmcdonald-master-dictionary/ and save it as `data/lexicon/external/Loughran-McDonald_MasterDictionary_1993-2025.csv`. It is free for academic research; commercial use needs a license from its authors. It is not included in this repository. Without it, the LM columns are left out.
+
+Optional: hawkish/dovish stance from FOMC-RoBERTa (see [Stance model](#stance-model) below).
 
 Choose what to analyze in `src/fedspeak/config.py`:
 
@@ -66,6 +68,22 @@ Outputs: `fomc_analysis.csv`, `fomc_dashboard.html`, and a plain English summary
 - Central bank language rarely reaches extremes, so a sustained move below zero matters more than the exact number.
 
 Sentiment describes the tone of the surrounding language, not a forecast. Treat it as a prompt to read the underlying text, which `export_snippets` helps with.
+
+## Stance model
+
+Optional, and off by default. A fine-tuned language model reads each keyword's clause as hawkish, dovish or neutral, which tone dictionaries cannot do. Each hit gets the three probabilities and a stance score (hawkish minus dovish, -1 to +1). Each meeting gets the average per keyword and a whole-meeting index: (hawkish sentences - dovish sentences) / all sentences.
+
+Setup:
+
+1. Accept the model's terms at https://huggingface.co/gtfintechlab/FOMC-RoBERTa with your own Hugging Face account. Access is reviewed by the authors.
+2. Log in once: `uvx --from huggingface_hub hf auth login`, with a read token.
+3. Install torch and transformers: `uv sync --extra stance` (about 2.5 GB; CUDA build on Windows and Linux).
+4. In `config.py`, set `STANCE_MODEL = "gtfintechlab/FOMC-RoBERTa"` and pin `STANCE_MODEL_REVISION` to a commit hash. Set `DASHBOARD_SENTIMENT = "stance"` to plot it.
+5. Run with `uv run --extra stance fedspeak`. The first run downloads the 1.4 GB model; results are cached in `output/stance_cache.sqlite`, so reruns only score new text. Scoring every sentence takes minutes on a GPU and an hour or more on CPU; set `STANCE_DOCUMENT_INDEX = False` to score keyword clauses only.
+
+### Attribution
+
+The stance model is FOMC-RoBERTa by the Financial Services Innovation Lab, Georgia Tech, from Agam Shah, Suvan Paturi and Sudheer Chava, "Trillion Dollar Words: A New Financial Dataset, Task & Market Analysis", ACL 2023 (https://aclanthology.org/2023.acl-long.368). The model, its data and code are licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): non-commercial use only, with attribution. The model is not included in this repository.
 
 ## Documentation
 

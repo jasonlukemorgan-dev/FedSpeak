@@ -24,11 +24,18 @@ SENTENCE_NEIGHBORS = 0    # sentence mode: extra sentences on each side of the h
 FED_LEXICON = DATA_DIR / "lexicon" / "fed_vader_overrides.csv"  # Fed adjustments to VADER's words; None for plain VADER
 EXCLUDE_KEYWORD_FROM_SCORE = True  # the keyword's own words do not score its sentence ("recession" is not counted as negative)
 LM_DICTIONARY = DATA_DIR / "lexicon" / "external" / "Loughran-McDonald_MasterDictionary_1993-2025.csv"  # optional, not committed
-DASHBOARD_SENTIMENT = "vader"      # sentiment shown on the dashboard: "vader" (Fed-adjusted) or "lm" (Loughran-McDonald net tone)
+DASHBOARD_SENTIMENT = "vader"      # sentiment shown on the dashboard: "vader" (Fed-adjusted), "lm" (Loughran-McDonald net tone) or "stance"
+
+# --- Stance model (optional: `uv sync --extra stance`, gated on Hugging Face, CC BY-NC 4.0) ---
+STANCE_MODEL = None                # "gtfintechlab/FOMC-RoBERTa" to score hawkish/dovish stance; None leaves it off
+STANCE_MODEL_REVISION = None       # commit hash to pin the model version; None follows the main branch
+STANCE_DOCUMENT_INDEX = True       # also score every sentence for a whole-meeting index (about 120k sentences; slow on CPU)
+STANCE_BATCH_SIZE = 32             # texts per model call; lower it if the GPU runs out of memory
 
 # --- Outputs (git-ignored) ---
 OUTPUT_DIR = PROJECT_ROOT / "output"
 OUTPUT_CSV = OUTPUT_DIR / "fomc_analysis.csv"      # one row per meeting
 HITS_CSV = OUTPUT_DIR / "hits.csv"                 # one row per keyword hit, with scored context
 DASHBOARD_HTML = OUTPUT_DIR / "fomc_dashboard.html"
+STANCE_CACHE = OUTPUT_DIR / "stance_cache.sqlite"  # model results keyed by (model, revision, text); safe to delete
 SNIPPETS_PER_KEYWORD = 3  # most sentiment-charged snippets printed per keyword after a run

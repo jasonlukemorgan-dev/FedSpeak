@@ -5,21 +5,23 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-from fedspeak.config import LM_DICTIONARY
+from fedspeak.config import LM_DICTIONARY, STANCE_DOCUMENT_INDEX
 from fedspeak.extract import extract_date_from_filename
 from fedspeak.lm import DOWNLOAD_HINT, document_measures, load_lm
 from fedspeak.match import count_keywords, find_hits
 from fedspeak.sentiment import keyword_sentiment
+from fedspeak.stance import HIT_COLUMNS as STANCE_COLUMNS
+from fedspeak.stance import document_index, keyword_stance
 
 HIT_COLUMNS = [
     "date", "meeting_type", "filename", "keyword", "matched", "char_start", "char_end",
     "word_start", "word_end", "words_left", "words_right", "window_overlap_words", "split_at", "score",
-    "lm_positive", "lm_negative", "lm_uncertainty", "lm_tone", "context",
+    "lm_positive", "lm_negative", "lm_uncertainty", "lm_tone", *STANCE_COLUMNS, "context",
 ]
 
 
 def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest_path=None,
-                    lm_path=LM_DICTIONARY):
+                    lm_path=LM_DICTIONARY, stance=None, stance_document=STANCE_DOCUMENT_INDEX):
     """Process every meeting's text file in text_dir, optionally limited to meetings
     between start_date and end_date (inclusive, "YYYY-MM-DD" or None).
 
@@ -28,6 +30,10 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
       (plus meeting type and release date when a manifest is given).
     - hits: one row per keyword hit with its position, scored context and score.
       Every number in `meetings` can be traced to rows here.
+
+    `stance` is a stance.StanceScorer, or None to leave stance out. With a scorer, each
+    hit's context gets stance columns, each meeting gets `<kw>_stance`, and with
+    `stance_document` also the whole-document index (doc_stance_*).
     """
     start = pd.Timestamp(start_date) if start_date else None
     end = pd.Timestamp(end_date) if end_date else None
@@ -69,14 +75,22 @@ def process_minutes(text_dir, keywords, start_date=None, end_date=None, manifest
                 raise RuntimeError(f"{path.name}: {kw} has {freq[f'{kw}_raw']} frequency hits "
                                    f"but {sentiments[f'{kw}_sentiment_n']} sentiment hits")
 
-        hit_rows += [{"date": date, "filename": path.name, **r} for r in records]
         doc = document_measures(text, lm) if lm else {}
+        if stance:
+            # Same context VADER scored, keyword kept in: the model reads the whole clause.
+            for r, s in zip(records, stance.score([r["context"] for r in records])):
+                r.update(s)
+            sentiments.update(keyword_stance(records, keywords))
+            if stance_document:
+                doc.update(document_index(text, stance))
+
+        hit_rows += [{"date": date, "filename": path.name, **r} for r in records]
         results.append({"date": date, "filename": path.name, **freq, **sentiments, **doc})
 
     df = pd.DataFrame(results).sort_values("date").reset_index(drop=True)
     clause_mode = bool(hit_rows) and "split_at" in hit_rows[0]   # split_at exists only in clause mode
     hit_cols = [c for c in HIT_COLUMNS if c != "meeting_type" and (lm or not c.startswith("lm_"))
-                and (clause_mode or c != "split_at")]
+                and (clause_mode or c != "split_at") and (stance or c not in STANCE_COLUMNS)]
     hits_df = pd.DataFrame(hit_rows, columns=hit_cols)
 
     if manifest_path and Path(manifest_path).exists():

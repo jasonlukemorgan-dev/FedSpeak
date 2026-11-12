@@ -216,7 +216,7 @@ Dot plot code lives in `dots.py` and its tables in the DuckDB file (see section 
 
 ## 4. Stance model (hawkish or dovish)
 
-Chosen as the next step on 2026-11-09 (option a). Scoped, not started: waiting on the decisions listed at the end of this section.
+Chosen as the next step on 2026-11-09 (option a). Plumbing built on 2026-11-12 and tested with a fake classifier (`stance.py`, pipeline, dashboard, optional extra). Waiting on Hugging Face access (requested 2026-11-12); then: pin the revision, run on the corpus, `fedspeak verify stance`, and the checks below.
 
 ### Model
 
@@ -256,11 +256,11 @@ Chosen as the next step on 2026-11-09 (option a). Scoped, not started: waiting o
 - Correlation with VADER and LM tone. They measure different things; low agreement is expected and worth recording.
 - Hand-read 20 to 30 hit clauses and record the results in `docs/context.md`.
 
-### Open decisions for the user
+### Decisions (2026-11-12)
 
-1. Torch build: CUDA (recommended, uses the GPU) or CPU-only (smaller install, slower).
-2. Scope: per-hit stance plus the whole-document index (recommended), or per-hit only.
-3. Dashboard: stance as a `DASHBOARD_SENTIMENT` option only, or also a fourth panel for the document index (changes the layout settings).
+1. Torch build: CUDA (cu128 index, Windows and Linux).
+2. Scope: per-hit stance plus the whole-document index.
+3. Dashboard: `DASHBOARD_SENTIMENT = "stance"` plus a fourth panel for the document index, shown only when the index is present. Reasoning in `docs/context.md`.
 
 ## Open decisions
 

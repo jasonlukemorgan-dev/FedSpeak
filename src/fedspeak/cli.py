@@ -27,8 +27,14 @@ def run():
     from fedspeak.dashboard import build_dashboard
     from fedspeak.pipeline import process_minutes
     from fedspeak.report import export_snippets, print_summary
+    from fedspeak.stance import scorer_from_config
 
-    df, hits = process_minutes(TEXT_DIR, KEYWORDS, START_DATE, END_DATE, MANIFEST_CSV)
+    stance = scorer_from_config()
+    try:
+        df, hits = process_minutes(TEXT_DIR, KEYWORDS, START_DATE, END_DATE, MANIFEST_CSV, stance=stance)
+    finally:
+        if stance:
+            stance.close()
 
     if df.empty:
         print("No data to process. Exiting.")
