@@ -212,6 +212,15 @@ Decisions (2026-11-12):
 
 Still to do after access is granted: pin `STANCE_MODEL_REVISION`, first corpus run, the checks in plan section 4 (index history, correlation with VADER and LM, 20 to 30 hand-read clauses), confirm the paper's training data range, clause splitting and reported F1, and `fedspeak verify stance`.
 
+## Session log
+
+### 2026-11-12
+
+- Project folder moved to `Projects\Automation Projects\FedSpeak` during a PC reorganization. Two local commits (clause scoring, stance scoping) were pushed after a check that they held nothing sensitive.
+- GitHub repo made public, after a scan of the code and history for secrets and third-party files (none found; the LM dictionary is git-ignored). It is linked from the user's GitHub profile.
+- Stance model plumbing built and tested with a fake classifier (decisions and reasoning in "Stance model" above). Nothing was tried and abandoned.
+- Fragile: `uv run` without `--extra stance` keeps torch installed today but a strict `uv sync` removes it; always pass the extra for stance runs. The Hugging Face access request is the only blocker for the first real run.
+
 ## Interpreting results with care
 
 VADER measures lexical tone of the surrounding sentence, not the Fed's view or a market signal. A negative score around "inflation" can reflect description of a problem the Fed is addressing rather than concern about its own stance. Use `export_snippets` to read the text behind any pattern before drawing conclusions.

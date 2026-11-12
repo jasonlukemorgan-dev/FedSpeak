@@ -6,6 +6,15 @@ Project aim: read the institutional psychology of the Federal Reserve across tim
 
 Read `docs/context.md` for the full history, design decisions and known issues before making changes.
 
+## Next steps
+
+A new session should ask the user which option to take before starting work.
+
+1. **Section 2, first metrics (recommended):** EWMA, trailing z-score and bootstrap confidence intervals (`docs/plan.md` section 2). Low effort, not blocked, and they will apply to the stance series too. Ask first: EWMA replaces the 4-meeting average or sits beside it (open decision).
+2. **Stance model, first real run:** blocked until Hugging Face approves access to `gtfintechlab/FOMC-RoBERTa` (requested 2026-11-12, reviews about every 14 days). Then: confirm `hf auth login`, pin `STANCE_MODEL_REVISION`, run the corpus, do the section 4 checks, add `fedspeak verify stance`.
+3. **Human audit pass:** `fedspeak audit`, label the sample, `--labels` to score VADER, LM and clause mode. Confirms the scoring choices made without labels.
+4. **Event shading:** replace the hardcoded COVID shading with a configurable list of episodes (known issue 1).
+
 ## Layout
 
 ```
@@ -50,6 +59,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 ## How it runs
 
 - Windows machine, VS Code, plain Python managed by uv. Anaconda and Jupyter are no longer used. uv is installed at `~\.local\bin`.
+- Project folder (moved 2026-11-12): `C:\Users\Richard Cheese\Projects\Automation Projects\FedSpeak`. The GitHub repo is public since 2026-11-12: never commit third-party files (LM dictionary, model weights) or tokens.
 - Corpus: `uv run fedspeak fetch` downloads all minutes from 1993 onward (HTML and, from about 2008, PDF) into `data/raw/minutes/` and records each meeting in `data/manifest.csv`, including meeting type (scheduled, unscheduled, conference_call) and release date. It skips files already on disk, so rerunning picks up new releases. federalreserve.gov is the source of truth; the old `D:\FOMC_Minutes` folder is gone.
 - Fetch range is not the analysis range. Users choose `KEYWORDS`, `START_DATE` and `END_DATE` in `config.py` at analysis time; nothing should hardcode a period.
 - Text source is HTML, not PDF (decided 2026-11-08 after verification 1.1: 2008 to 2024 PDFs are spliced across columns and pre-2020 PDFs include the SEP). `fetch` writes cleaned text for new meetings to `data/text/`; `uv run fedspeak extract --force` rebuilds all of it and must be run after any change to `extract.py`, with the resulting text diff committed. PDFs are kept only for cross-checks (`fedspeak verify`).
