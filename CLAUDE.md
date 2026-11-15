@@ -11,7 +11,7 @@ Read `docs/context.md` for the full history, design decisions and known issues b
 A new session should ask the user which option to take before starting work.
 
 1. **Section 2, first metrics (recommended):** EWMA, trailing z-score and bootstrap confidence intervals (`docs/plan.md` section 2). Low effort, not blocked, and they will apply to the stance series too. Ask first: EWMA replaces the 4-meeting average or sits beside it (open decision).
-2. **Stance model, first real run:** blocked until Hugging Face approves access to `gtfintechlab/FOMC-RoBERTa` (requested 2026-11-12, reviews about every 14 days). Then: confirm `hf auth login`, pin `STANCE_MODEL_REVISION`, run the corpus, do the section 4 checks, add `fedspeak verify stance`.
+2. **Stance model, first real run:** blocked until Hugging Face approves access to `gtfintechlab/FOMC-RoBERTa` (requested 2026-11-12, reviews about every 14 days). Then: confirm `hf auth login`, pin `STANCE_MODEL_REVISION`, run the corpus, do the section 4 checks, add `fedspeak verify stance`. Not blocked meanwhile: the labeled stance eval set (section 4), labeled blind before the model runs.
 3. **Human audit pass:** `fedspeak audit`, label the sample, `--labels` to score VADER, LM and clause mode. Confirms the scoring choices made without labels.
 4. **Event shading:** replace the hardcoded COVID shading with a configurable list of episodes (known issue 1).
 
@@ -20,6 +20,7 @@ A new session should ask the user which option to take before starting work.
 ```
 FedSpeak/
   CLAUDE.md
+  REVIEW.md            repo-specific failure modes every code review checks
   README.md
   pyproject.toml       dependencies (managed by uv)
   uv.lock              exact resolved versions, committed
@@ -91,6 +92,7 @@ Keep the hierarchy strict: source in `src/`, documentation in `docs/`, nothing l
 - Keep the keyword list driven by the `KEYWORDS` constant. Nothing downstream should hardcode a keyword.
 - Prefer clean, direct code and prose. No em dashes in docs or comments.
 - Ask before adding heavy dependencies or restructuring into multiple modules.
+- Before committing, and in any code review, check the change against `REVIEW.md`.
 
 ## Known issues to fix first
 
