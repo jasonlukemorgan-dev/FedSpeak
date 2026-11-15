@@ -264,7 +264,7 @@ A blind, hand-labeled set that measures the model on our own clauses before any 
 - **Labels:** hawkish, dovish or neutral, following the paper's annotation guide so our labels mean what the model's labels mean. Read the guide before labeling. Mark clauses that are ambiguous rather than forcing a label.
 - **Split:** about 50 dev clauses for any choice we tune (score thresholds, aggregation), about 100 held-out test clauses scored once, after all choices are fixed.
 - **Metrics:** accuracy, macro-F1 (compared with the paper's reported F1), confusion matrix, results by era, and calibration: Brier score plus a reliability table (do clauses with `p_hawkish` near 0.8 turn out hawkish about 80 percent of the time?).
-- **Baseline:** majority class. Optional: a zero-shot LLM classifier on the same set, to see whether the fine-tuned model earns its 1.4 GB.
+- **Baseline:** majority class. Optional: Claude labels the same clauses inside a Claude Code session (Pro subscription, no API or per-token billing), to see whether the fine-tuned model earns its 1.4 GB. The project uses no paid APIs.
 - **Tooling:** add a stance question to `fedspeak audit` (scores stay hidden until revealed) and `fedspeak verify stance --labels <csv>` to compute the metrics above.
 - **Pass mark:** decided before scoring the test split. Suggested: macro-F1 within 0.10 of the paper's figure and no era far below the rest. If it fails, report stance with that caveat or not at all.
 
