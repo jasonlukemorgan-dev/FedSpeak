@@ -256,6 +256,18 @@ Chosen as the next step on 2026-11-09 (option a). Plumbing built on 2026-11-12 a
 - Correlation with VADER and LM tone. They measure different things; low agreement is expected and worth recording.
 - Hand-read 20 to 30 hit clauses and record the results in `docs/context.md`.
 
+### Labeled eval set (proposed 2026-11-15)
+
+A blind, hand-labeled set that measures the model on our own clauses before any stance result is trusted. Labeling needs no model access, so it can be done while Hugging Face access is pending.
+
+- **Sample:** about 150 hit clauses, stratified by keyword and era (1990s, 2000s, 2010s, 2020s), fixed seed. Drawn and labeled before the model runs, so its scores cannot anchor the labels.
+- **Labels:** hawkish, dovish or neutral, following the paper's annotation guide so our labels mean what the model's labels mean. Read the guide before labeling. Mark clauses that are ambiguous rather than forcing a label.
+- **Split:** about 50 dev clauses for any choice we tune (score thresholds, aggregation), about 100 held-out test clauses scored once, after all choices are fixed.
+- **Metrics:** accuracy, macro-F1 (compared with the paper's reported F1), confusion matrix, results by era, and calibration: Brier score plus a reliability table (do clauses with `p_hawkish` near 0.8 turn out hawkish about 80 percent of the time?).
+- **Baseline:** majority class. Optional: a zero-shot LLM classifier on the same set, to see whether the fine-tuned model earns its 1.4 GB.
+- **Tooling:** add a stance question to `fedspeak audit` (scores stay hidden until revealed) and `fedspeak verify stance --labels <csv>` to compute the metrics above.
+- **Pass mark:** decided before scoring the test split. Suggested: macro-F1 within 0.10 of the paper's figure and no era far below the rest. If it fails, report stance with that caveat or not at all.
+
 ### Decisions (2026-11-12)
 
 1. Torch build: CUDA (cu128 index, Windows and Linux).
@@ -265,4 +277,5 @@ Chosen as the next step on 2026-11-09 (option a). Plumbing built on 2026-11-12 a
 ## Open decisions
 
 - EWMA as a replacement for the rolling mean, or shown beside it.
+- Stance eval set (section 4): sample size, pass mark, and whether to add the optional LLM baseline.
 - New dependencies: `ruptures`, a Loughran-McDonald word list. Approved: uv, pytest (tests only), DuckDB.
